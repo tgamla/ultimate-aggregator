@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "outDir": "./bin/",
+        "sourceMap": false,
+        "module": "umd",
+        "target": "es5",
+        "typeRoots": [
+            "./src/types"
+        ]
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}

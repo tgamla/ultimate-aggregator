@@ -1,0 +1,37 @@
+{
+  "name": "ultimate-aggregator",
+  "version": "0.8.0",
+  "description": "Ultimate solution for aggregation and modeling data in javascript.",
+  "author": "Tomasz Jakub Gamla",
+  "license": "ISC",
+  "homepage": "https://github.com/tgamla/ultimate-aggregator#readme",
+  "email": "ultimateaggregator@o2.pl",
+  "keywords": [
+    "aggreator",
+    "ultimate aggregator",
+    "aggregation in javascript",
+    "modeling data in javascript",
+    "query language for javascript",
+    "query builder for javascript",
+    "quering lib for javascript"
+  ],
+
+  "files": [ "bin/" ],
+  "main": "bin/aggregator.js",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc",
+    "tests": "mocha tests/**/*.spec.js --expose-gc"
+  },
+  "devDependencies": {
+    "typescript": "2.5.3",
+    "mocha": "4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tgamla/ultimate-aggregator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tgamla/ultimate-aggregator/issues"
+  }
+}
