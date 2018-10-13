@@ -343,7 +343,7 @@ Determines sorting of values returned by aggregate expression. ORDER_BY directiv
 Example:
 ```javascript
 var results = ua.query()
-    .select('NTH(row)ORER_BY(DESC)')
+    .select('NTH(row, 2)ORER_BY(DESC)')
     .from([ undefined, 1, 3, 2 ])
     .toList();
 // results: [ 2 ]

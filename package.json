@@ -1,13 +1,13 @@
 {
   "name": "ultimate-aggregator",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Ultimate solution for aggregation and modeling data in javascript.",
   "author": "Tomasz Jakub Gamla",
   "license": "ISC",
   "homepage": "https://github.com/tgamla/ultimate-aggregator#readme",
   "email": "ultimateaggregator@o2.pl",
   "keywords": [
-    "aggreator",
+    "aggregator",
     "ultimate aggregator",
     "aggregation in javascript",
     "modeling data in javascript",
