@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../common/logger", "../prototypes/expression", "./groupBy", "./aggregate"], factory);
+        define(["require", "exports", "../common/utils", "../common/logger", "../prototypes/expression", "./groupBy", "../helpers/aggregateParser"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -23,7 +23,7 @@ var __extends = (this && this.__extends) || (function () {
     var logger_1 = require("../common/logger");
     var expression_1 = require("../prototypes/expression");
     var groupBy_1 = require("./groupBy");
-    var aggregate_1 = require("./aggregate");
+    var aggregateParser_1 = require("../helpers/aggregateParser");
     var Field = /** @class */ (function (_super) {
         __extends(Field, _super);
         function Field(logger, rawExpression, queryQuotes, queryExpressions, groupId, grouping, isWithinUngroup, level) {
@@ -42,7 +42,7 @@ var __extends = (this && this.__extends) || (function () {
             }
             _this.hasNonAggregatedFields = false;
             _this.innerExpressions = new Array();
-            aggregate_1.AggregationParser.parse(_this, logger, queryExpressions, queryQuotes, grouping, groupId, isWithinUngroup);
+            aggregateParser_1.AggregationParser.parse(_this, logger, queryExpressions, queryQuotes, grouping, groupId, isWithinUngroup);
             _this.validate();
             _this.handleGroupIndex();
             _this.handleNonAggrFields();

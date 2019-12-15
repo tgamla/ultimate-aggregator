@@ -2,7 +2,9 @@ import * as utils from "../common/utils";
 import { Logger, MessageCodes } from '../common/logger';
 import { Expression, ExpressionRegExps, Type as ExpressionType, Quotes } from '../prototypes/expression';
 import { GroupBy, Grouping } from './groupBy';
-import { Aggregate, AggregationParser } from './aggregate';
+import { Aggregate } from './aggregate';
+import { AggregationParser } from '../helpers/aggregateParser';
+
 
 export class Field extends Expression {
     
