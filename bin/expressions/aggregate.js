@@ -14,18 +14,19 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../prototypes/expression", "./groupBy", "./orderBy", "../common/formatter", "../helpers/aggregateParser", "../constants/aggregationType"], factory);
+        define(["require", "exports", "../common/utils", "./expression", "./groupBy", "./orderBy", "../common/formatter", "../helpers/aggregateParser", "../constants/aggregationType", "../constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
-    var expression_1 = require("../prototypes/expression");
+    var expression_1 = require("./expression");
     var groupBy_1 = require("./groupBy");
     var orderBy_1 = require("./orderBy");
     var formatter_1 = require("../common/formatter");
     var aggregateParser_1 = require("../helpers/aggregateParser");
     var aggregationType_1 = require("../constants/aggregationType");
+    var expressionType_1 = require("../constants/expressionType");
     var Aggregate = /** @class */ (function (_super) {
         __extends(Aggregate, _super);
         function Aggregate(logger, rawExpression, aggregation, queryQuotes, queryExpressions, groupId, grouping, level, isPrimalAggregation, args, over, sorting) {
@@ -38,11 +39,11 @@ var __extends = (this && this.__extends) || (function () {
             if (sorting === void 0) { sorting = null; }
             var _this = this;
             var groupingId = over && !over.length ? null : groupBy_1.GroupBy.getLastGroupingId(grouping, over);
-            _this = _super.call(this, expression_1.Type.AGGREGATE, rawExpression, queryQuotes, groupingId) || this;
+            _this = _super.call(this, expressionType_1.ExpressionType.AGGREGATE, rawExpression, queryQuotes, groupingId) || this;
             _this.aggregation = aggregation;
             _this.level = level;
             _this.isPrimalAggregation = isPrimalAggregation;
-            _this.arguments = utils.map(args, function (arg) { return new expression_1.Expression(expression_1.Type.ARGUMENT, arg, queryQuotes); });
+            _this.arguments = utils.map(args, function (arg) { return new expression_1.Expression(expressionType_1.ExpressionType.ARGUMENT, arg, queryQuotes); });
             _this.grouping = over ? over : utils.copy(grouping);
             _this.sorting = sorting;
             _this.hasGroupByOver = over ? true : false;

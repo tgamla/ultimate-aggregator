@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../expressions/aggregate", "../common/logger", "../prototypes/expression", "../expressions/groupBy", "../expressions/orderBy", "../constants/aggregationType"], factory);
+        define(["require", "exports", "../common/utils", "../expressions/aggregate", "../common/logger", "../expressions/expression", "../expressions/groupBy", "../expressions/orderBy", "../constants/aggregationType", "../constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -22,10 +22,11 @@ var __extends = (this && this.__extends) || (function () {
     var utils = require("../common/utils");
     var aggregate_1 = require("../expressions/aggregate");
     var logger_1 = require("../common/logger");
-    var expression_1 = require("../prototypes/expression");
+    var expression_1 = require("../expressions/expression");
     var groupBy_1 = require("../expressions/groupBy");
     var orderBy_1 = require("../expressions/orderBy");
     var aggregationType_1 = require("../constants/aggregationType");
+    var expressionType_1 = require("../constants/expressionType");
     var AggregationParser = /** @class */ (function () {
         function AggregationParser() {
         }
@@ -37,7 +38,7 @@ var __extends = (this && this.__extends) || (function () {
                 var optionalArgs = aggrArgs.slice(1, aggrArgs.length);
                 var aggrType = match[2].toUpperCase();
                 var lastProcessedIndex;
-                var isPrimal = expression.type === expression_1.Type.FIELD;
+                var isPrimal = expression.type === expressionType_1.ExpressionType.FIELD;
                 if (!aggrArgs.endIndex) {
                     logger.error(utils.format('Missing closing bracket for {0} aggregation:\n{1}', aggrType, match.input));
                 }
@@ -48,13 +49,13 @@ var __extends = (this && this.__extends) || (function () {
                 var expressionsOver;
                 var nonMatchedGrouping;
                 var requiresGroupingCompatibility = isPrimal && !isWithinUngroup && grouping.length ? true : false;
-                var overArgs = this.parseAggregationDirective(expression, logger, match, aggrType, lastProcessedIndex, expression_1.Type.GROUP_BY);
+                var overArgs = this.parseAggregationDirective(expression, logger, match, aggrType, lastProcessedIndex, expressionType_1.ExpressionType.GROUP_BY);
                 if (overArgs) {
                     lastProcessedIndex = overArgs.endIndex;
                     if (requiresGroupingCompatibility) {
                         nonMatchedGrouping = [];
                         expressionsOver = overArgs.reduce(function (expressions, arg) {
-                            var groupByExpr = new expression_1.Expression(expression_1.Type.GROUP_BY, arg, queryQuotes, groupBy_1.GroupBy.getLastGroupingId(expressions));
+                            var groupByExpr = new expression_1.Expression(expressionType_1.ExpressionType.GROUP_BY, arg, queryQuotes, groupBy_1.GroupBy.getLastGroupingId(expressions));
                             groupByExpr.normalize();
                             if (!groupBy_1.GroupBy.isOverall(groupByExpr)) {
                                 if (requiresGroupingCompatibility && !utils.some(grouping, function (groupBy) { return groupBy.equals(groupByExpr); })) {
@@ -80,13 +81,13 @@ var __extends = (this && this.__extends) || (function () {
                     }
                 }
                 var sorting;
-                var orderByArgs = this.parseAggregationDirective(expression, logger, match, aggrType, lastProcessedIndex, expression_1.Type.ORDER_BY);
+                var orderByArgs = this.parseAggregationDirective(expression, logger, match, aggrType, lastProcessedIndex, expressionType_1.ExpressionType.ORDER_BY);
                 if (orderByArgs) {
                     lastProcessedIndex = orderByArgs.endIndex;
                     sorting = orderByArgs.reduce(function (sortingAcc, arg) {
                         var orderExpr = new orderBy_1.OrderBy(arg, queryQuotes, queryExpressions, groupBy_1.GroupBy.getLastGroupingId(grouping));
                         if (orderExpr.normalized === '' && orderByArgs.length > 1) {
-                            logger.error(utils.format('Argument expression is empty for {0} clause after {1} aggregation:\n{2}', expression_1.Type.ORDER_BY, aggrType, match.input));
+                            logger.error(utils.format('Argument expression is empty for {0} clause after {1} aggregation:\n{2}', expressionType_1.ExpressionType.ORDER_BY, aggrType, match.input));
                         }
                         else {
                             sortingAcc.push(orderExpr);
@@ -114,7 +115,7 @@ var __extends = (this && this.__extends) || (function () {
                     logger.error(utils.format('No closing bracket for {0} clause after {1} aggregation:\n{2}', directiveType, aggrType, aggrMatch.input));
                 }
                 parsedArgs.endIndex += startIndex;
-                if (directiveType === expression_1.Type.ORDER_BY && !aggregate_1.Aggregate.canHaveSorting(aggrType)) {
+                if (directiveType === expressionType_1.ExpressionType.ORDER_BY && !aggregate_1.Aggregate.canHaveSorting(aggrType)) {
                     logger.warning(utils.format('{0} directive will not be taken into account for {1} aggregation please consider removing such directive or changing aggregation type:\n{2}', directiveType, aggrType, aggrMatch.input));
                     return parsedArgs;
                 }

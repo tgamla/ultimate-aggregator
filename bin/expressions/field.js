@@ -14,16 +14,17 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../common/logger", "../prototypes/expression", "./groupBy", "../helpers/aggregateParser"], factory);
+        define(["require", "exports", "../common/utils", "../common/logger", "./expression", "./groupBy", "../helpers/aggregateParser", "../constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
     var logger_1 = require("../common/logger");
-    var expression_1 = require("../prototypes/expression");
+    var expression_1 = require("./expression");
     var groupBy_1 = require("./groupBy");
     var aggregateParser_1 = require("../helpers/aggregateParser");
+    var expressionType_1 = require("../constants/expressionType");
     var Field = /** @class */ (function (_super) {
         __extends(Field, _super);
         function Field(logger, rawExpression, queryQuotes, queryExpressions, groupId, grouping, isWithinUngroup, level) {
@@ -31,7 +32,7 @@ var __extends = (this && this.__extends) || (function () {
             if (grouping === void 0) { grouping = []; }
             if (isWithinUngroup === void 0) { isWithinUngroup = false; }
             if (level === void 0) { level = 0; }
-            var _this = _super.call(this, expression_1.Type.FIELD, rawExpression, queryQuotes, groupBy_1.GroupBy.getLastGroupingId(grouping)) || this;
+            var _this = _super.call(this, expressionType_1.ExpressionType.FIELD, rawExpression, queryQuotes, groupBy_1.GroupBy.getLastGroupingId(grouping)) || this;
             _this.level = level;
             _this.grouping = utils.copy(grouping);
             _this.addGroupId(groupId);

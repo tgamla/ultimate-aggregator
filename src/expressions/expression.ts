@@ -1,9 +1,11 @@
 import * as utils from "../common/utils";
+import { ExpressionType } from '../constants/expressionType';
+
 
 export class Expression {
     
     public id: string;
-    public type: Type;
+    public type: ExpressionType;
     public level: number;
     public raw: string;
     public code: string;
@@ -14,7 +16,7 @@ export class Expression {
     public hasGroupIndex: boolean;
     
     constructor(
-        type: Type,
+        type: ExpressionType,
         rawExpression: any,
         queryQuotes: Quotes,
         parentGroupingId: string = null
@@ -22,11 +24,12 @@ export class Expression {
         this.type = type;
         this.id = utils.generateId();
         this.code = this.raw = this.convertToStr(rawExpression);
-        this.normalizeCode(queryQuotes);
         this.groupIds = [];
         this.parentGroupingId = parentGroupingId;
         this.hasGroupIndex = false;
         this.hasIndex = false;
+
+        this.normalizeCode(queryQuotes);
     }
 
     public normalize(): void {
@@ -52,11 +55,11 @@ export class Expression {
     }
 
     public isSelectiveType(): boolean {
-        return (this.type === Type.FIELD || this.type === Type.AGGREGATE) ? true : false;
+        return (this.type === ExpressionType.FIELD || this.type === ExpressionType.AGGREGATE) ? true : false;
     }
     
     public isGroupingExpression(): boolean {
-        return this.type === Type.GROUP_BY;
+        return this.type === ExpressionType.GROUP_BY;
     }
 
     public checkIndex(): boolean {
@@ -162,15 +165,6 @@ Original: ({2})
             );
         }
     }
-}
-
-export enum Type {
-    FIELD = 'FIELD',
-    AGGREGATE = 'AGGREGATE',
-    GROUP_BY = 'GROUP_BY',
-    ORDER_BY = 'ORDER_BY',
-    FILTER = 'FILTER',
-    ARGUMENT = 'ARGUMENT'
 }
 
 export type Quotes = { string?: string };

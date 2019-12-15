@@ -1,11 +1,12 @@
 import * as utils from "../common/utils";
 import { Logger } from '../common/logger';
-import { Expression, Type as ExpressionType, Quotes, ExpressionRegExps } from '../prototypes/expression';
+import { Expression, Quotes, ExpressionRegExps } from './expression';
 import { GroupBy, Grouping } from './groupBy';
 import { Sorting, OrderBy } from './orderBy';
 import { QueryFormatter } from '../common/formatter';
 import { AggregationParser } from '../helpers/aggregateParser';
 import { AggregationType } from '../constants/aggregationType';
+import { ExpressionType } from '../constants/expressionType';
 
 
 export class Aggregate extends Expression {

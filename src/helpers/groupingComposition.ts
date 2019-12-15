@@ -1,5 +1,5 @@
 import * as utils from '../common/utils';
-import { Expression } from '../prototypes/expression';
+import { Expression } from '../expressions/expression';
 import { Field } from '../expressions/field';
 import { Aggregate } from '../expressions/aggregate';
 import { GroupBy } from '../expressions/groupBy';

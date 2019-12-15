@@ -1,9 +1,10 @@
 import * as utils from "../common/utils";
 import { Logger, MessageCodes } from '../common/logger';
-import { Expression, ExpressionRegExps, Type as ExpressionType, Quotes } from '../prototypes/expression';
+import { Expression, ExpressionRegExps, Quotes } from './expression';
 import { GroupBy, Grouping } from './groupBy';
 import { Aggregate } from './aggregate';
 import { AggregationParser } from '../helpers/aggregateParser';
+import { ExpressionType } from '../constants/expressionType';
 
 
 export class Field extends Expression {

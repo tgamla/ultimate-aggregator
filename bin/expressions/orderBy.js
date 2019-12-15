@@ -14,20 +14,21 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../prototypes/expression", "../common/formatter"], factory);
+        define(["require", "exports", "../common/utils", "./expression", "../common/formatter", "../constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
-    var expression_1 = require("../prototypes/expression");
+    var expression_1 = require("./expression");
     var formatter_1 = require("../common/formatter");
+    var expressionType_1 = require("../constants/expressionType");
     var OrderBy = /** @class */ (function (_super) {
         __extends(OrderBy, _super);
         function OrderBy(rawExpression, queryQuotes, queryExpressions, parentGroupingId) {
             if (queryExpressions === void 0) { queryExpressions = null; }
             if (parentGroupingId === void 0) { parentGroupingId = null; }
-            var _this = _super.call(this, expression_1.Type.ORDER_BY, rawExpression, queryQuotes, parentGroupingId) || this;
+            var _this = _super.call(this, expressionType_1.ExpressionType.ORDER_BY, rawExpression, queryQuotes, parentGroupingId) || this;
             _this.normalize();
             var sibling = _this.findSibling(queryExpressions);
             if (sibling) {

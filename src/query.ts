@@ -4,7 +4,7 @@ import { QueryFormatter } from './common/formatter';
 import { BaseQuery } from './prototypes/baseQuery';
 import { Group } from './group';
 import { Ungroup } from './ungroup';
-import { Expression, Quotes, Type as ExpressionType } from './prototypes/expression';
+import { Expression, Quotes } from './expressions/expression';
 import { Field } from './expressions/field';
 import { Aggregate } from './expressions/aggregate';
 import { GroupBy, Grouping } from './expressions/groupBy';
@@ -13,6 +13,8 @@ import { GroupComposition, Selector } from './helpers/groupComposition';
 import { GroupingComposition } from './helpers/groupingComposition';
 import { PreProcess } from './helpers/preProcess';
 import { BaseGroup } from './prototypes/baseGroup';
+import { ExpressionType } from './constants/expressionType';
+
 
 export class Query extends BaseQuery<Query> implements IQuery {
     public _preFilter: string;

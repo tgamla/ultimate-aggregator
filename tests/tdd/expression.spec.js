@@ -1,8 +1,9 @@
 const assert = require('assert');
 const utils = require('../../bin/common/utils');
-const expression = require('../../bin/prototypes/expression');
+const expression = require('../../bin/expressions/expression');
 const Expression = expression.Expression;
-const Type = expression.Type;
+const ExpressionType = require('../../bin/constants/expressionType').ExpressionType;
+
 
 describe('Test Expression', () => {
     beforeEach(() => {
@@ -13,7 +14,7 @@ describe('Test Expression', () => {
     describe('Code normalization', () => {
         it('replace comments', () => {
 
-            var expression = new Expression(Type.FIELD,
+            var expression = new Expression(ExpressionType.FIELD,
 `
 /* /* */
 `
@@ -24,7 +25,7 @@ describe('Test Expression', () => {
 
         it('replace multiline comments', () => {
 
-            var expression = new Expression(Type.FIELD,
+            var expression = new Expression(ExpressionType.FIELD,
 `
 /*
 //
@@ -41,14 +42,14 @@ preComment = 1 // commented text
 
         it('ending semicolon removal', () => {
 
-            var expression = new Expression(Type.FIELD, 'preComment = 1;');
+            var expression = new Expression(ExpressionType.FIELD, 'preComment = 1;');
 
             assert.equal(expression.code, `preComment = 1`);
         });
 
         it('replace double and single quotes', () => {
             
-            var expression = new Expression(Type.FIELD,
+            var expression = new Expression(ExpressionType.FIELD,
 `"\\"" + '\\'' +
 "\\\\" +
 '\\\\';`,
@@ -64,7 +65,7 @@ preComment = 1 // commented text
 
         it('replace multiline quotes', () => {
             
-            var expression = new Expression(Type.FIELD,
+            var expression = new Expression(ExpressionType.FIELD,
 `\`
 \\\`
 \` +

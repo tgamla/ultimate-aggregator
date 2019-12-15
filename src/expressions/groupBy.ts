@@ -1,5 +1,7 @@
 import * as utils from "../common/utils";
-import { Expression, Type as ExpressionType, Quotes } from '../prototypes/expression';
+import { Expression, Quotes } from './expression';
+import { ExpressionType } from '../constants/expressionType';
+
 
 export class GroupBy extends Expression {
     

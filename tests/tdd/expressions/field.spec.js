@@ -3,8 +3,8 @@ const utils = require('../../../bin/common/utils');
 const Field = require('../../../bin/expressions/field').Field;
 const AggregationType = require('../../../bin/constants/aggregationType').AggregationType;
 const GroupBy = require('../../../bin/expressions/groupBy').GroupBy;
-const expression = require('../../../bin/prototypes/expression');
-const Type = expression.Type;
+const ExpressionType = require('../../../bin/constants/expressionType').ExpressionType;
+
 
 const loggerMock = {
     queryName: '',
@@ -33,7 +33,7 @@ describe('Test Field', () => {
             assert.equal(expression.id, '__1__');
             assert.equal(expression.code, '__groupings__.__2__');
             assert.equal(expression.level, 0);
-            assert.equal(expression.type, Type.FIELD);
+            assert.equal(expression.type, ExpressionType.FIELD);
             assert.equal(expression.raw, 'COUNT( true )');
             assert.equal(expression.normalized, '"COUNT"("true")');
         });
@@ -45,7 +45,7 @@ describe('Test Field', () => {
             assert.equal(expression.id, '__2__');
             assert.equal(expression.code, 'ALL');
             assert.equal(expression.level, 1);
-            assert.equal(expression.type, Type.AGGREGATE);
+            assert.equal(expression.type, ExpressionType.AGGREGATE);
             assert.equal(expression.aggregation, AggregationType.COUNT);
             assert.equal(expression.raw, ' true ');
             assert.equal(expression.normalized, '"ALL"');
@@ -64,7 +64,7 @@ describe('Test Field', () => {
 
             assert.equal(expression.hasDistinct, true);
             assert.equal(expression.code, ' row[ __quotes__.__2__ ]');
-            assert.equal(expression.type, Type.AGGREGATE);
+            assert.equal(expression.type, ExpressionType.AGGREGATE);
             assert.equal(expression.aggregation, AggregationType.AVG);
             assert.equal(expression.raw, ' DISTINCT row[ __quotes__.__2__ ] ');
             assert.equal(expression.normalized, '"row"["__quotes__"."__2__"]');
@@ -77,7 +77,7 @@ describe('Test Field', () => {
             assert.equal(parentExp.code, '__3__.__4__');
             assert.equal(expression.hasDistinct, false);
             assert.equal(expression.code, 'row.invoiceValue');
-            assert.equal(expression.type, Type.AGGREGATE);
+            assert.equal(expression.type, ExpressionType.AGGREGATE);
             assert.equal(expression.aggregation, AggregationType.COUNT);
             assert.equal(expression.raw, 'row.invoiceValue');
             assert.equal(expression.normalized, '"row"."invoiceValue"');
@@ -92,7 +92,7 @@ describe('Test Field', () => {
 
             assert.equal(expression.hasDistinct, false);
             assert.equal(expression.code, 'row.invoiceValue');
-            assert.equal(expression.type, Type.AGGREGATE);
+            assert.equal(expression.type, ExpressionType.AGGREGATE);
             assert.equal(expression.aggregation, AggregationType.CONCAT);
             assert.equal(expression.raw, 'row.invoiceValue');
             assert.equal(expression.normalized, '"row"."invoiceValue"');

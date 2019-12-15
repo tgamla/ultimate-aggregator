@@ -14,19 +14,20 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../prototypes/expression"], factory);
+        define(["require", "exports", "../common/utils", "./expression", "../constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
-    var expression_1 = require("../prototypes/expression");
+    var expression_1 = require("./expression");
+    var expressionType_1 = require("../constants/expressionType");
     var GroupBy = /** @class */ (function (_super) {
         __extends(GroupBy, _super);
         function GroupBy(rawExpression, queryQuotes, queryExpressions, parentGroupingId) {
             if (queryExpressions === void 0) { queryExpressions = null; }
             if (parentGroupingId === void 0) { parentGroupingId = null; }
-            var _this = _super.call(this, expression_1.Type.GROUP_BY, rawExpression, queryQuotes, parentGroupingId) || this;
+            var _this = _super.call(this, expressionType_1.ExpressionType.GROUP_BY, rawExpression, queryQuotes, parentGroupingId) || this;
             _this.fillDefault();
             if (_this.isOverallGrouping()) {
                 return _this;

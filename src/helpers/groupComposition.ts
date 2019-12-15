@@ -1,6 +1,6 @@
 import * as utils from '../common/utils';
 import { Logger, MessageCodes } from '../common/logger';
-import { Expression } from '../prototypes/expression';
+import { Expression } from '../expressions/expression';
 import { GroupBy, Grouping } from '../expressions/groupBy';
 import { Sorting } from '../expressions/orderBy';
 

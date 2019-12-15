@@ -1,10 +1,11 @@
 import * as utils from "../common/utils";
 import { Aggregate } from '../expressions/aggregate';
 import { Logger, MessageCodes } from '../common/logger';
-import { Expression, Type as ExpressionType, Quotes, ExpressionRegExps } from '../prototypes/expression';
+import { Expression, Quotes, ExpressionRegExps } from '../expressions/expression';
 import { GroupBy, Grouping } from '../expressions/groupBy';
 import { Sorting, OrderBy } from '../expressions/orderBy';
 import { AggregationType } from '../constants/aggregationType';
+import { ExpressionType } from '../constants/expressionType';
 
 
 export abstract class AggregationParser {

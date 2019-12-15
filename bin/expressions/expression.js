@@ -4,23 +4,24 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils"], factory);
+        define(["require", "exports", "../common/utils", "../constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
+    var expressionType_1 = require("../constants/expressionType");
     var Expression = /** @class */ (function () {
         function Expression(type, rawExpression, queryQuotes, parentGroupingId) {
             if (parentGroupingId === void 0) { parentGroupingId = null; }
             this.type = type;
             this.id = utils.generateId();
             this.code = this.raw = this.convertToStr(rawExpression);
-            this.normalizeCode(queryQuotes);
             this.groupIds = [];
             this.parentGroupingId = parentGroupingId;
             this.hasGroupIndex = false;
             this.hasIndex = false;
+            this.normalizeCode(queryQuotes);
         }
         Expression.prototype.normalize = function () {
             this.normalized = this.code.replace(ExpressionRegExps.ANY_VALID_NAME, '"$1"').replace(/\s/gm, '');
@@ -40,10 +41,10 @@
             return utils.some(this.groupIds, function (thisGroupId) { return thisGroupId === groupId; });
         };
         Expression.prototype.isSelectiveType = function () {
-            return (this.type === Type.FIELD || this.type === Type.AGGREGATE) ? true : false;
+            return (this.type === expressionType_1.ExpressionType.FIELD || this.type === expressionType_1.ExpressionType.AGGREGATE) ? true : false;
         };
         Expression.prototype.isGroupingExpression = function () {
-            return this.type === Type.GROUP_BY;
+            return this.type === expressionType_1.ExpressionType.GROUP_BY;
         };
         Expression.prototype.checkIndex = function () {
             return ExpressionRegExps.SINGLE_INDEX.test(this.code);
@@ -134,15 +135,6 @@
         return Expression;
     }());
     exports.Expression = Expression;
-    var Type;
-    (function (Type) {
-        Type["FIELD"] = "FIELD";
-        Type["AGGREGATE"] = "AGGREGATE";
-        Type["GROUP_BY"] = "GROUP_BY";
-        Type["ORDER_BY"] = "ORDER_BY";
-        Type["FILTER"] = "FILTER";
-        Type["ARGUMENT"] = "ARGUMENT";
-    })(Type = exports.Type || (exports.Type = {}));
     // WATCHOUT! ... DRAGONS! Don't get burned ...
     // TODO:: use esprima?
     var JS_SEMANTIC_CHARACTERS = '[\\s+\\-\\/=&!;:><%~,|?\\()[\\]\\\\\\*\\.]';

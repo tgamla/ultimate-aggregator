@@ -1,6 +1,8 @@
 import * as utils from '../common/utils';
-import { Expression, Type as ExpressionType, Quotes, ExpressionRegExps } from '../prototypes/expression';
+import { Expression, Quotes, ExpressionRegExps } from './expression';
 import { QueryFormatter as Formatter } from '../common/formatter';
+import { ExpressionType } from '../constants/expressionType';
+
 
 export class OrderBy extends Expression {
     

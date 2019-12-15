@@ -1,6 +1,8 @@
 import * as utils from '../common/utils';
-import { Expression, Quotes, Type as ExpressionType } from '../prototypes/expression'
+import { Expression, Quotes } from '../expressions/expression'
 import { Logger } from '../common/logger';
+import { ExpressionType } from '../constants/expressionType';
+
 
 export class PreProcess {
     public filter: Expression;

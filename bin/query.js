@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./common/utils", "./common/logger", "./common/formatter", "./prototypes/baseQuery", "./group", "./ungroup", "./prototypes/expression", "./expressions/field", "./expressions/aggregate", "./expressions/groupBy", "./expressions/orderBy", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess"], factory);
+        define(["require", "exports", "./common/utils", "./common/logger", "./common/formatter", "./prototypes/baseQuery", "./group", "./ungroup", "./expressions/expression", "./expressions/field", "./expressions/aggregate", "./expressions/groupBy", "./expressions/orderBy", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess", "./constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -25,7 +25,7 @@ var __extends = (this && this.__extends) || (function () {
     var baseQuery_1 = require("./prototypes/baseQuery");
     var group_1 = require("./group");
     var ungroup_1 = require("./ungroup");
-    var expression_1 = require("./prototypes/expression");
+    var expression_1 = require("./expressions/expression");
     var field_1 = require("./expressions/field");
     var aggregate_1 = require("./expressions/aggregate");
     var groupBy_1 = require("./expressions/groupBy");
@@ -33,6 +33,7 @@ var __extends = (this && this.__extends) || (function () {
     var groupComposition_1 = require("./helpers/groupComposition");
     var groupingComposition_1 = require("./helpers/groupingComposition");
     var preProcess_1 = require("./helpers/preProcess");
+    var expressionType_1 = require("./constants/expressionType");
     var Query = /** @class */ (function (_super) {
         __extends(Query, _super);
         function Query(config) {
@@ -622,7 +623,7 @@ var __extends = (this && this.__extends) || (function () {
         };
         Query.prototype.parseFilter = function (filter) {
             return filter ?
-                new expression_1.Expression(expression_1.Type.FILTER, filter, this.quotes) :
+                new expression_1.Expression(expressionType_1.ExpressionType.FILTER, filter, this.quotes) :
                 null;
         };
         Query.prototype.createGroupingComposition = function (expressions) {

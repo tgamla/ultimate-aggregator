@@ -1,10 +1,9 @@
 const assert = require('assert');
-const utils = require('../../bin/common/utils');
 const Query = require('../../bin/query').Query;
 const Group = require('../../bin/group').Group;
 const Ungroup = require('../../bin/ungroup').Ungroup;
-const expression = require('../../bin/prototypes/expression');
-const Type = expression.Type;
+const ExpressionType = require('../../bin/constants/expressionType').ExpressionType;
+
 
 describe('Test Query', () => {
     
@@ -22,7 +21,7 @@ describe('Test Query', () => {
                 .groupBy('row.departmentRegion');
             
             query.calculate();
-            var allAggregations = query.allExpressions.filter((exp) => exp.type === Type.AGGREGATE);
+            var allAggregations = query.allExpressions.filter((exp) => exp.type === ExpressionType.AGGREGATE);
 
             assert.equal(allAggregations.length, 2);
         });
@@ -37,7 +36,7 @@ describe('Test Query', () => {
                 .groupBy([ 'row.departmentRegion' ]);
             
             query.calculate();
-            var allAggregations = query.allExpressions.filter((exp) => exp.type === Type.AGGREGATE);
+            var allAggregations = query.allExpressions.filter((exp) => exp.type === ExpressionType.AGGREGATE);
 
             assert.equal(allAggregations.length, 2);
         });
