@@ -19,6 +19,40 @@ export class GroupingComposition {
         this.hasBeenDefined = false;
     }
 
+    getGroupingVariableDeclarations(): Array<string> {
+        var declarations = [];
+        var isParentComplex = this.isComplex();
+
+        utils.forEach<GroupingComposition>(this.inner, (innerGroupingComp) => {
+            declarations = declarations.concat(
+                innerGroupingComp.getGroupingDeclarations(
+                    isParentComplex,
+                    this.id
+                )[0]
+            ).concat(
+                innerGroupingComp.getGroupingVariableDeclarations()
+            );
+        });
+
+        return declarations;
+    }
+    
+    getGroupingDeclarations(isParentComplex: boolean, parentId: string): Array<string> {
+        var parentGrouping: string = parentId || '__groupings__';
+
+        if (isParentComplex) {
+            var groupingId = this.id;
+            var innerGroupReference = parentGrouping + groupingId;
+            return [
+                innerGroupReference,
+                innerGroupReference + ' = ' + parentGrouping + '.' + groupingId
+            ]
+        }
+        else {
+            return [ parentGrouping ];
+        }
+    }
+
     isComplex(): boolean {
         return (
             this.groupingExpression == null ||

@@ -389,18 +389,9 @@ var __extends = (this && this.__extends) || (function () {
                 acc.push(exp.valueId);
                 return acc;
             }, []);
-            declarations = declarations.concat(this.getGroupingVariableDeclarations(this.groupingComposition));
+            declarations = declarations.concat(this.groupingComposition.getGroupingVariableDeclarations());
             declarations = declarations.concat(this.getGroupVariableDeclarations(this.groupComposition));
             return declarations.join(', ') + (declarations.length ? ',' : '');
-        };
-        Query.prototype.getGroupingVariableDeclarations = function (groupingComp) {
-            var _this = this;
-            var declarations = [];
-            var isParentComplex = groupingComp.isComplex();
-            utils.forEach(groupingComp.inner, function (innerGroupingComp) {
-                declarations = declarations.concat(_this.getGroupingDeclarations(isParentComplex, groupingComp.id, innerGroupingComp)[0]).concat(_this.getGroupingVariableDeclarations(innerGroupingComp));
-            });
-            return declarations;
         };
         Query.prototype.getGroupVariableDeclarations = function (groupComposition) {
             var _this = this;
@@ -703,7 +694,7 @@ var __extends = (this && this.__extends) || (function () {
                 var groupingId = groupingComp.id;
                 var currentGroupingIds = groupingIds + groupingId;
                 var currentGroupCompositions = _this.groupMap[currentGroupingIds];
-                var groupingDeclarations = _this.getGroupingDeclarations(isParentComplex, parentGroupingComposition.id, groupingComp);
+                var groupingDeclarations = groupingComp.getGroupingDeclarations(isParentComplex, parentGroupingComposition.id);
                 var innerGroupReference = groupingDeclarations[0];
                 var innerGroupDeclaration = groupingDeclarations[1];
                 var groupingsDeclaration = utils.format(Query.GROUPING_VAR_DECLARATION, groupingId, innerGroupReference || '', iteratorName);
@@ -729,20 +720,6 @@ var __extends = (this && this.__extends) || (function () {
                 else
                     return '';
             }).join('\n');
-        };
-        Query.prototype.getGroupingDeclarations = function (isParentComplex, parentId, groupingComposition) {
-            var parentGrouping = parentId || '__groupings__';
-            if (isParentComplex) {
-                var groupingId = groupingComposition.id;
-                var innerGroupReference = parentGrouping + groupingId;
-                return [
-                    innerGroupReference,
-                    innerGroupReference + ' = ' + parentGrouping + '.' + groupingId
-                ];
-            }
-            else {
-                return [parentGrouping];
-            }
         };
         Query.prototype.defineResultSet = function (groupComposition) {
             if (groupComposition === void 0) { groupComposition = this.groupComposition; }

@@ -465,7 +465,7 @@ export class Query extends BaseQuery<Query> implements IQuery {
         }, []);
 
         declarations = declarations.concat(
-            this.getGroupingVariableDeclarations(this.groupingComposition)
+            this.groupingComposition.getGroupingVariableDeclarations()
         );
 
         declarations = declarations.concat(
@@ -473,25 +473,6 @@ export class Query extends BaseQuery<Query> implements IQuery {
         )
 
         return declarations.join(', ') + (declarations.length ? ',' : '');
-    }
-
-    private getGroupingVariableDeclarations(groupingComp: GroupingComposition): Array<string> {
-        var declarations = [];
-        var isParentComplex = groupingComp.isComplex();
-
-        utils.forEach<GroupingComposition>(groupingComp.inner, (innerGroupingComp) => {
-            declarations = declarations.concat(
-                this.getGroupingDeclarations(
-                    isParentComplex,
-                    groupingComp.id,
-                    innerGroupingComp
-                )[0]
-            ).concat(
-                this.getGroupingVariableDeclarations(innerGroupingComp)
-            );
-        });
-
-        return declarations;
     }
 
     private getGroupVariableDeclarations(groupComposition: GroupComposition): Array<string> {
@@ -923,10 +904,9 @@ export class Query extends BaseQuery<Query> implements IQuery {
             var groupingId: string = groupingComp.id;
             var currentGroupingIds = groupingIds + groupingId;
             var currentGroupCompositions: Array<GroupComposition> = this.groupMap[currentGroupingIds];
-            var groupingDeclarations: Array<string> = this.getGroupingDeclarations(
+            var groupingDeclarations: Array<string> = groupingComp.getGroupingDeclarations(
                 isParentComplex,
-                parentGroupingComposition.id,
-                groupingComp
+                parentGroupingComposition.id
             );
             var innerGroupReference: string = groupingDeclarations[0];
             var innerGroupDeclaration: string = groupingDeclarations[1];
@@ -979,22 +959,6 @@ export class Query extends BaseQuery<Query> implements IQuery {
                 return '';
             
         }).join('\n');
-    }
-    
-    private getGroupingDeclarations(isParentComplex: boolean, parentId: string, groupingComposition: GroupingComposition): Array<string> {
-        var parentGrouping: string = parentId || '__groupings__';
-
-        if (isParentComplex) {
-            var groupingId = groupingComposition.id;
-            var innerGroupReference = parentGrouping + groupingId;
-            return [
-                innerGroupReference,
-                innerGroupReference + ' = ' + parentGrouping + '.' + groupingId
-            ]
-        }
-        else {
-            return [ parentGrouping ];
-        }
     }
 
     private static RESULTS_PUSH_TEMPLATE = '{0}.push({1});';

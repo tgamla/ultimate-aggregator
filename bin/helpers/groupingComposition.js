@@ -20,6 +20,29 @@
             this.expressions = [];
             this.hasBeenDefined = false;
         }
+        GroupingComposition.prototype.getGroupingVariableDeclarations = function () {
+            var _this = this;
+            var declarations = [];
+            var isParentComplex = this.isComplex();
+            utils.forEach(this.inner, function (innerGroupingComp) {
+                declarations = declarations.concat(innerGroupingComp.getGroupingDeclarations(isParentComplex, _this.id)[0]).concat(innerGroupingComp.getGroupingVariableDeclarations());
+            });
+            return declarations;
+        };
+        GroupingComposition.prototype.getGroupingDeclarations = function (isParentComplex, parentId) {
+            var parentGrouping = parentId || '__groupings__';
+            if (isParentComplex) {
+                var groupingId = this.id;
+                var innerGroupReference = parentGrouping + groupingId;
+                return [
+                    innerGroupReference,
+                    innerGroupReference + ' = ' + parentGrouping + '.' + groupingId
+                ];
+            }
+            else {
+                return [parentGrouping];
+            }
+        };
         GroupingComposition.prototype.isComplex = function () {
             return (this.groupingExpression == null ||
                 this.getPrimalAggregations().length + utils.keysLength(this.inner) > 0 ||
