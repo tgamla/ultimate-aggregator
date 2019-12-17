@@ -39,7 +39,20 @@
                 default: initValue = 'null';
             }
             ;
-            return utils.format('{0} = {1}', this.id, initValue);
+            return this.id + " = " + initValue;
+        };
+        GroupComposition.prototype.getGroupVariableDeclarations = function () {
+            return utils.reduce(this.innerGroups, function (declarations, group) {
+                if (group.isSubSelectorGroup()) {
+                    if (group.hasParentGrouping) {
+                        declarations.push(group.id);
+                    }
+                    else {
+                        declarations.push(group.getInitVariable());
+                    }
+                }
+                return declarations.concat(group.getGroupVariableDeclarations());
+            }, []);
         };
         GroupComposition.prototype.isSubSelectorGroup = function () {
             return !this.isMain && !this.isUngroup;

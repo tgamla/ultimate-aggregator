@@ -4,6 +4,7 @@ import { Field } from '../expressions/field';
 import { Aggregate } from '../expressions/aggregate';
 import { GroupBy } from '../expressions/groupBy';
 
+
 export class GroupingComposition {
     id: GroupingId;
     groupingExpression: GroupBy;
@@ -79,6 +80,26 @@ export class GroupingComposition {
 
     hasFieldsWithGroupIndex(): boolean {
         return utils.some<Expression>(this.expressions, (exp) => exp.hasGroupIndex);
+    }
+
+    static getComposition(expressions: Array<Expression>): GroupingComposition {
+        return expressions.reduce((groupingComposition, expression) => {
+            if (expression.isSelectiveType()) {
+                var groupComp: GroupingComposition = (<Field|Aggregate>expression).grouping.reduce((groupingComp, groupingExp) => {
+                    var innerGrpComp: GroupingComposition = groupingComp.inner[groupingExp.id];
+    
+                    if (innerGrpComp === undefined) {
+                        groupingComp.inner[groupingExp.id] = innerGrpComp = new GroupingComposition(groupingExp);
+                    }
+    
+                    return innerGrpComp;
+                }, groupingComposition);
+    
+                groupComp.expressions.push(expression);
+            }
+
+            return groupingComposition;
+        }, new GroupingComposition(null));
     }
 }
 

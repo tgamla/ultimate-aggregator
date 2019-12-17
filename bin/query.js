@@ -14,14 +14,14 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./common/utils", "./common/logger", "./common/formatter", "./prototypes/baseQuery", "./group", "./ungroup", "./expressions/expression", "./expressions/field", "./expressions/aggregate", "./expressions/groupBy", "./expressions/orderBy", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess", "./constants/expressionType"], factory);
+        define(["require", "exports", "./common/utils", "./common/logger", "./formatters/queryFomatter", "./prototypes/baseQuery", "./group", "./ungroup", "./expressions/expression", "./expressions/field", "./expressions/aggregate", "./expressions/groupBy", "./expressions/orderBy", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess", "./constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("./common/utils");
     var logger_1 = require("./common/logger");
-    var formatter_1 = require("./common/formatter");
+    var queryFomatter_1 = require("./formatters/queryFomatter");
     var baseQuery_1 = require("./prototypes/baseQuery");
     var group_1 = require("./group");
     var ungroup_1 = require("./ungroup");
@@ -303,7 +303,7 @@ var __extends = (this && this.__extends) || (function () {
                     var mainGrouping = this.parseGrouping(this._groupBy, null);
                     this.groupComposition = this.createGroupComposition(this, mainGrouping);
                     this.groupMap = this.getGroupMap(this.groupComposition, {});
-                    this.groupingComposition = this.createGroupingComposition(this.allExpressions);
+                    this.groupingComposition = groupingComposition_1.GroupingComposition.getComposition(this.allExpressions);
                     this.createFn();
                     // use for both single regexp:
                     // TODO:: replace double new lines with single
@@ -341,7 +341,7 @@ var __extends = (this && this.__extends) || (function () {
                     resultSet = this.definePlainResultSet();
                 }
             }
-            this.code = formatter_1.QueryFormatter.formatFunction(this.defineAllDeclaration(), aggregationIterators, this.defineNonGroupedPostProcessing(), groupedResultSet, resultSet, this.defineComparators(), this.groupComposition.defineSorting(), this.debugLevel, this.hasAnyGroupDistinct());
+            this.code = queryFomatter_1.QueryFormatter.formatFunction(this.defineAllDeclaration(), aggregationIterators, this.defineNonGroupedPostProcessing(), groupedResultSet, resultSet, this.defineComparators(), this.groupComposition.defineSorting(), this.debugLevel, this.hasAnyGroupDistinct());
             if (this.debugLevel > 1) {
                 this.logger.debugObject('Query', this);
                 this.logExpressions();
@@ -375,7 +375,7 @@ var __extends = (this && this.__extends) || (function () {
             return utils.some(groupComposition.innerGroups, function (groupComp) { return _this.hasAnyGroupDistinct(groupComp); });
         };
         Query.prototype.defineAllDeclaration = function () {
-            return utils.format("var __results__ = [],\n    __groupings__ = {0},\n    __val__, __length__, __i__,\n    {1}\n    prop, row, out, index = 1;", this.defineMainGroupingDeclaration(), this.defineAllVariableDeclarations());
+            return queryFomatter_1.QueryFormatter.getAllDeclarationsDefinition(this.defineMainGroupingDeclaration(), this.defineAllVariableDeclarations());
         };
         Query.prototype.defineMainGroupingDeclaration = function () {
             return this.defineGrouping(this.groupingComposition, this.groupMap['']);
@@ -391,22 +391,8 @@ var __extends = (this && this.__extends) || (function () {
                 return acc;
             }, []);
             declarations = declarations.concat(this.groupingComposition.getGroupingVariableDeclarations());
-            declarations = declarations.concat(this.getGroupVariableDeclarations(this.groupComposition));
+            declarations = declarations.concat(this.groupComposition.getGroupVariableDeclarations());
             return declarations.join(', ') + (declarations.length ? ',' : '');
-        };
-        Query.prototype.getGroupVariableDeclarations = function (groupComposition) {
-            var _this = this;
-            return utils.reduce(groupComposition.innerGroups, function (declarations, group) {
-                if (group.isSubSelectorGroup()) {
-                    if (group.hasParentGrouping) {
-                        declarations.push(group.id);
-                    }
-                    else {
-                        declarations.push(group.getInitVariable());
-                    }
-                }
-                return declarations.concat(_this.getGroupVariableDeclarations(group));
-            }, []);
         };
         Query.prototype.defineAggregationIterators = function () {
             var expsByLevel = this.getExpAggregationsByLevels().reverse();
@@ -417,7 +403,7 @@ var __extends = (this && this.__extends) || (function () {
                 var currentLevelAggregations = expsByLevel[level];
                 var groupingCompByLvl = isLastIteration ?
                     this.groupingComposition :
-                    this.createGroupingComposition(currentLevelAggregations);
+                    groupingComposition_1.GroupingComposition.getComposition(currentLevelAggregations);
                 var isUsingIndex = this.isAnyUsingIndex(currentLevelAggregations);
                 var ungroupsDef = isLastIteration ? this.defineUngroups() : '';
                 var groupingsDef = this.defineGroupings('', [], this.groupingComposition, groupingCompByLvl, isLastIteration);
@@ -426,7 +412,7 @@ var __extends = (this && this.__extends) || (function () {
                     var postProcessing = isLastIteration ?
                         '' :
                         this.defineGroupsPostProcessing(maxLevel - level);
-                    iterators.push(formatter_1.QueryFormatter.formatAggregationIterator(groupingsDef, ungroupsDef, aggregationDef, postProcessing, isUsingIndex));
+                    iterators.push(queryFomatter_1.QueryFormatter.formatAggregationIterator(groupingsDef, ungroupsDef, aggregationDef, postProcessing, isUsingIndex));
                 }
             }
             return iterators.join('\n\n');
@@ -520,7 +506,7 @@ var __extends = (this && this.__extends) || (function () {
         Query.prototype.defineGroupsPostProcessing = function (postProcessingLvl) {
             var expForPostProcessing = this.allExpressions.filter(function (exp) { return exp.level === postProcessingLvl && exp instanceof aggregate_1.Aggregate && exp.isPostProcessingType(); });
             if (expForPostProcessing.length) {
-                var currentLvlGroupingComp = this.createGroupingComposition(expForPostProcessing);
+                var currentLvlGroupingComp = groupingComposition_1.GroupingComposition.getComposition(expForPostProcessing);
                 return this.defineGroupedResultSet(currentLvlGroupingComp, postProcessingLvl, false);
             }
             else {
@@ -626,21 +612,6 @@ var __extends = (this && this.__extends) || (function () {
                 new expression_1.Expression(expressionType_1.ExpressionType.FILTER, filter, this.quotes) :
                 null;
         };
-        Query.prototype.createGroupingComposition = function (expressions) {
-            return expressions.reduce(function (groupingComposition, expression) {
-                if (expression.isSelectiveType()) {
-                    var groupComp = expression.grouping.reduce(function (groupingComp, groupingExp) {
-                        var innerGrpComp = groupingComp.inner[groupingExp.id];
-                        if (innerGrpComp === undefined) {
-                            groupingComp.inner[groupingExp.id] = innerGrpComp = new groupingComposition_1.GroupingComposition(groupingExp);
-                        }
-                        return innerGrpComp;
-                    }, groupingComposition);
-                    groupComp.expressions.push(expression);
-                }
-                return groupingComposition;
-            }, new groupingComposition_1.GroupingComposition(null));
-        };
         Query.prototype.findGroupingComposition = function (groupingComposition, groupingId) {
             var _this = this;
             if (groupingComposition.id === groupingId) {
@@ -684,7 +655,7 @@ var __extends = (this && this.__extends) || (function () {
         Query.prototype.definePlainResultSet = function () {
             var groupingsDefinition = this.defineGroupings('', [], this.groupingComposition, this.groupingComposition, true);
             var nonGroupedFields = this.allExpressions.filter(function (exp) { return !exp.parentGroupingId && exp instanceof field_1.Field; });
-            return formatter_1.QueryFormatter.formatAggregationIterator(groupingsDefinition, '', this.defineResultSet(), '', this.isAnyUsingIndex(nonGroupedFields));
+            return queryFomatter_1.QueryFormatter.formatAggregationIterator(groupingsDefinition, '', this.defineResultSet(), '', this.isAnyUsingIndex(nonGroupedFields));
         };
         Query.prototype.defineGroupedResultSet = function (parentGroupingComposition, postProcessingLvl, shouldFillResults, groupingIds) {
             var _this = this;
@@ -716,7 +687,7 @@ var __extends = (this && this.__extends) || (function () {
                 }
                 var postProcessing = _this.defineExpressionsPostProcessing(groupingComp.expressions, postProcessingLvl);
                 if (postProcessing || innerLoops || fillingResults) {
-                    return formatter_1.QueryFormatter.formatGroupedResultSet(innerGroupDeclaration, innerGroupReference || '', iteratorName, groupingsDeclaration, postProcessing, innerLoops, fillingResults);
+                    return queryFomatter_1.QueryFormatter.formatGroupedResultSet(innerGroupDeclaration, innerGroupReference || '', iteratorName, groupingsDeclaration, postProcessing, innerLoops, fillingResults);
                 }
                 else
                     return '';
@@ -732,7 +703,7 @@ var __extends = (this && this.__extends) || (function () {
                 preProcessing.push('(' + groupComposition.filter.code + ')');
             }
             if (groupComposition.distinct) {
-                preProcessing.push(utils.format('!{0}({1}, out)', formatter_1.QueryFormatter.DISTINCT_FN_NAME, containerReference));
+                preProcessing.push(utils.format('!{0}({1}, out)', queryFomatter_1.QueryFormatter.DISTINCT_FN_NAME, containerReference));
             }
             if (preProcessing.length) {
                 return utils.format(Query.RESULTS_PREPROCESSED_PUSH_TEMPLATE, containerReference, this.defineSelection(groupComposition.selection), preProcessing.join(' && '));

@@ -14,14 +14,14 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "./expression", "../common/formatter", "../constants/expressionType"], factory);
+        define(["require", "exports", "../common/utils", "./expression", "../formatters/sortingFormatter", "../constants/expressionType"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
     var expression_1 = require("./expression");
-    var formatter_1 = require("../common/formatter");
+    var sortingFormatter_1 = require("../formatters/sortingFormatter");
     var expressionType_1 = require("../constants/expressionType");
     var OrderBy = /** @class */ (function (_super) {
         __extends(OrderBy, _super);
@@ -68,14 +68,14 @@ var __extends = (this && this.__extends) || (function () {
             var comparisions = utils.reduce(sorting, function (compDef, orderBy, index) {
                 var isASC = orderBy.isAscending();
                 if (orderBy.isOrderedByValue()) {
-                    return utils.format(compDef, formatter_1.QueryFormatter.formatComparision('{0}', (isASC ? 'out' : '__outB__'), (isASC ? '__outB__' : 'out')));
+                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.getValuesComparisionDefinition('{0}', (isASC ? 'out' : '__outB__'), (isASC ? '__outB__' : 'out')));
                 }
                 else {
                     var valRef = parseInt(index) === 0 ? '' : index;
                     var xValue = orderBy.code;
                     var yValue = orderBy.code.replace(expression_1.ExpressionRegExps.OUT, '$1__outB__$2');
-                    valuesDeclarations += utils.format("    var __x{0}__ = {1};\n    var __y{0}__ = {2};\n", valRef, xValue, yValue);
-                    return utils.format(compDef, formatter_1.QueryFormatter.formatComparision('{0}', '__' + (isASC ? 'x' : 'y') + valRef + '__', '__' + (isASC ? 'y' : 'x') + valRef + '__'));
+                    valuesDeclarations += sortingFormatter_1.SortingFromatter.getValuesDeclarationDefinition(valRef, xValue, yValue);
+                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.getValuesComparisionDefinition('{0}', '__' + (isASC ? 'x' : 'y') + valRef + '__', '__' + (isASC ? 'y' : 'x') + valRef + '__'));
                 }
             }, '{0}');
             return valuesDeclarations + '\n    return ' + utils.format(comparisions, '0');

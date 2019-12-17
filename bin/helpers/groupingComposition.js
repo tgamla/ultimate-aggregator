@@ -63,6 +63,21 @@
         GroupingComposition.prototype.hasFieldsWithGroupIndex = function () {
             return utils.some(this.expressions, function (exp) { return exp.hasGroupIndex; });
         };
+        GroupingComposition.getComposition = function (expressions) {
+            return expressions.reduce(function (groupingComposition, expression) {
+                if (expression.isSelectiveType()) {
+                    var groupComp = expression.grouping.reduce(function (groupingComp, groupingExp) {
+                        var innerGrpComp = groupingComp.inner[groupingExp.id];
+                        if (innerGrpComp === undefined) {
+                            groupingComp.inner[groupingExp.id] = innerGrpComp = new GroupingComposition(groupingExp);
+                        }
+                        return innerGrpComp;
+                    }, groupingComposition);
+                    groupComp.expressions.push(expression);
+                }
+                return groupingComposition;
+            }, new GroupingComposition(null));
+        };
         return GroupingComposition;
     }());
     exports.GroupingComposition = GroupingComposition;

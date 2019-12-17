@@ -1,6 +1,6 @@
 import * as utils from './common/utils';
 import { Logger, MessageCodes } from './common/logger';
-import { QueryFormatter } from './common/formatter';
+import { QueryFormatter } from './formatters/queryFomatter';
 import { BaseQuery } from './prototypes/baseQuery';
 import { Group } from './group';
 import { Ungroup } from './ungroup';
@@ -16,7 +16,7 @@ import { BaseGroup } from './prototypes/baseGroup';
 import { ExpressionType } from './constants/expressionType';
 
 
-export class Query extends BaseQuery<Query> implements IQuery {
+export class Query extends BaseQuery<Query> implements IQuery<any> {
     public _preFilter: string;
     private preFiltering: PreProcess;
 
@@ -343,7 +343,7 @@ export class Query extends BaseQuery<Query> implements IQuery {
                 var mainGrouping: Grouping = this.parseGrouping(this._groupBy, null);
                 this.groupComposition = this.createGroupComposition(this, mainGrouping);
                 this.groupMap = this.getGroupMap(this.groupComposition, {});
-                this.groupingComposition = this.createGroupingComposition(this.allExpressions);
+                this.groupingComposition = GroupingComposition.getComposition(this.allExpressions);
                 this.createFn();
                 
                 // use for both single regexp:
@@ -438,12 +438,7 @@ export class Query extends BaseQuery<Query> implements IQuery {
     }
 
     private defineAllDeclaration(): string {
-        return utils.format(
-`var __results__ = [],
-    __groupings__ = {0},
-    __val__, __length__, __i__,
-    {1}
-    prop, row, out, index = 1;`,
+        return QueryFormatter.getAllDeclarationsDefinition(
             this.defineMainGroupingDeclaration(),
             this.defineAllVariableDeclarations()
         );
@@ -471,24 +466,10 @@ export class Query extends BaseQuery<Query> implements IQuery {
         );
 
         declarations = declarations.concat(
-            this.getGroupVariableDeclarations(this.groupComposition)
+            this.groupComposition.getGroupVariableDeclarations()
         )
 
         return declarations.join(', ') + (declarations.length ? ',' : '');
-    }
-
-    private getGroupVariableDeclarations(groupComposition: GroupComposition): Array<string> {
-        return utils.reduce<GroupComposition, Array<string>>(groupComposition.innerGroups, (declarations, group) => {
-            if (group.isSubSelectorGroup()) {
-                if (group.hasParentGrouping) {
-                    declarations.push(group.id);
-                }
-                else {
-                    declarations.push(group.getInitVariable());
-                }
-            }
-            return declarations.concat(this.getGroupVariableDeclarations(group));
-        }, []);
     }
 
     private defineAggregationIterators(): string {
@@ -501,7 +482,7 @@ export class Query extends BaseQuery<Query> implements IQuery {
             var currentLevelAggregations: Array<Aggregate> = expsByLevel[level];
             var groupingCompByLvl: GroupingComposition = isLastIteration ?
                 this.groupingComposition :
-                this.createGroupingComposition(currentLevelAggregations);
+                GroupingComposition.getComposition(currentLevelAggregations);
             var isUsingIndex: boolean = this.isAnyUsingIndex(currentLevelAggregations);
             var ungroupsDef: string = isLastIteration ? this.defineUngroups() : '';
             var groupingsDef: string = this.defineGroupings('', [], this.groupingComposition, groupingCompByLvl, isLastIteration);
@@ -669,7 +650,7 @@ export class Query extends BaseQuery<Query> implements IQuery {
             (exp) => exp.level === postProcessingLvl && exp instanceof Aggregate && exp.isPostProcessingType()
             );
         if (expForPostProcessing.length) {
-            var currentLvlGroupingComp = this.createGroupingComposition(expForPostProcessing);
+            var currentLvlGroupingComp = GroupingComposition.getComposition(expForPostProcessing);
             return this.defineGroupedResultSet(currentLvlGroupingComp, postProcessingLvl, false);
         }
         else {
@@ -806,26 +787,6 @@ export class Query extends BaseQuery<Query> implements IQuery {
         return filter ?
             new Expression(ExpressionType.FILTER, filter, this.quotes) :
             null
-    }
-
-    private createGroupingComposition(expressions: Array<Expression>): GroupingComposition {
-        return expressions.reduce((groupingComposition, expression) => {
-            if (expression.isSelectiveType()) {
-                var groupComp: GroupingComposition = (<Field|Aggregate>expression).grouping.reduce((groupingComp, groupingExp) => {
-                    var innerGrpComp: GroupingComposition = groupingComp.inner[groupingExp.id];
-    
-                    if (innerGrpComp === undefined) {
-                        groupingComp.inner[groupingExp.id] = innerGrpComp = new GroupingComposition(groupingExp);
-                    }
-    
-                    return innerGrpComp;
-                }, groupingComposition);
-    
-                groupComp.expressions.push(expression);
-            }
-
-            return groupingComposition;
-        }, new GroupingComposition(null));
     }
 
     private findGroupingComposition(groupingComposition: GroupingComposition, groupingId: string) {

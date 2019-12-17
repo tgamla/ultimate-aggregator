@@ -15,8 +15,9 @@
     "query builder for javascript",
     "quering lib for javascript"
   ],
-
-  "files": [ "bin/" ],
+  "files": [
+    "bin/"
+  ],
   "main": "bin/aggregator.js",
   "scripts": {
     "dev": "tsc -w",
@@ -25,7 +26,8 @@
   },
   "devDependencies": {
     "typescript": "2.5.3",
-    "mocha": "4.1.0"
+    "mocha": "4.1.0",
+    "tslint": "5.20.1"
   },
   "repository": {
     "type": "git",

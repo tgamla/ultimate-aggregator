@@ -3,10 +3,11 @@ import { Logger } from '../common/logger';
 import { Expression, Quotes, ExpressionRegExps } from './expression';
 import { GroupBy, Grouping } from './groupBy';
 import { Sorting, OrderBy } from './orderBy';
-import { QueryFormatter } from '../common/formatter';
 import { AggregationParser } from '../helpers/aggregateParser';
 import { AggregationType } from '../constants/aggregationType';
 import { ExpressionType } from '../constants/expressionType';
+import { AggregateFromatter, AggregateTemplates } from '../formatters/aggregateFormatter';
+import { SortingFromatter } from '../formatters/sortingFormatter';
 
 
 export class Aggregate extends Expression {
@@ -111,33 +112,33 @@ export class Aggregate extends Expression {
             else if (this.aggregation === AggregationType.NTH) {
                 var nthNo: string = this.getFirstArgument() || '1';
                 if (this.hasDistinct) {
-                    return utils.format(AggregationTemplates.DISTINCT_NTH,
+                    return utils.format(AggregateTemplates.DISTINCT_NTH,
                         this.code,
                         expObjDef,
                         nthNo,
                         this.defineValReference('Distinct'),
                         this.defineValReference('DistinctLength')
-                        );
+                    );
                 }
                 else {
-                    return utils.format(AggregationTemplates.NTH,
+                    return utils.format(AggregateTemplates.NTH,
                         this.code,
                         expObjDef,
                         this.hasGroupIndex ? this.parentGroupingId + '.groupIndex' : 'index',
                         nthNo
-                        );
+                    );
                 }
             }
             else if (this.aggregation === AggregationType.CONCAT) {
                 if (this.hasDistinct) {
-                    return utils.format(AggregationTemplates.DISTINCT_CONCAT, this.code, expObjDef, '__val__', this.defineValReference('Distinct'));
+                    return utils.format(AggregateTemplates.DISTINCT_CONCAT, this.code, expObjDef, '__val__', this.defineValReference('Distinct'));
                 }
                 else {
-                    return utils.format(AggregationTemplates.CONCAT, this.code, expObjDef, '__val__');
+                    return utils.format(AggregateTemplates.CONCAT, this.code, expObjDef, '__val__');
                 }
             }
             else if (this.aggregation === AggregationType.FIRST) {
-                return utils.format(AggregationTemplates.FIRST,
+                return utils.format(AggregateTemplates.FIRST,
                     this.code,
                     expObjDef,
                     this.hasGroupIndex ? this.parentGroupingId + '.groupIndex' : 'index'
@@ -145,10 +146,10 @@ export class Aggregate extends Expression {
             }
             else {
                 if (this.hasDistinct) {
-                    return AggregationTemplates.format('DISTINCT_' + this.aggregation, this.code, expObjDef, this.defineValReference('Distinct'));
+                    return AggregateFromatter.getAggrDefinition('DISTINCT_' + this.aggregation, this.code, expObjDef, this.defineValReference('Distinct'));
                 }
                 else {
-                    return AggregationTemplates.format(this.aggregation, this.code, expObjDef);
+                    return AggregateFromatter.getAggrDefinition(this.aggregation, this.code, expObjDef);
                 }
             }
     }
@@ -161,7 +162,7 @@ export class Aggregate extends Expression {
                 }
             } break;
             case AggregationType.AVG: {
-                return utils.format(PostProcessingTemplates.AVG,
+                return AggregateFromatter.getPostProcessingAvgDefinition(
                     this.defineExpObjRef()
                 );
             }
@@ -170,7 +171,7 @@ export class Aggregate extends Expression {
                     this.defineSorting() : '';
                 var delimiter: string = this.getFirstArgument() || '", "';
 
-                return utils.format(PostProcessingTemplates.CONCAT,
+                return AggregateFromatter.getPostProcessingConcatDefinition(
                     this.defineExpObjRef(),
                     delimiter,
                     sorting
@@ -183,15 +184,11 @@ export class Aggregate extends Expression {
 
     public defineSortingComparator(): string {
         if (this.sorting) {
-            return utils.format(
-`
-function {0}(x, y) {
-    return {1};
-}
-`,
-                    utils.addIdSuffix(this.id, 'Comparator'),
-                    this.defineComparision(this.sorting)
-                )
+            return SortingFromatter.getSortingFnDefinition(
+                utils.addIdSuffix(this.id, 'Comparator'),
+                this.sorting,
+                this.hasExtendedSorting()
+            );
         }
         
     }
@@ -250,7 +247,7 @@ function {0}(x, y) {
     }
 
     private canHaveDistinct(): boolean {
-        return AggregationTemplates['DISTINCT_' + this.aggregation] ? true : false;
+        return AggregateTemplates['DISTINCT_' + this.aggregation] ? true : false;
     }
 
     private findSibling(queryExpressions: Array<Expression>): Aggregate {
@@ -351,7 +348,7 @@ function {0}(x, y) {
 
         if (this.aggregation === AggregationType.FIRST || this.aggregation === AggregationType.LAST) {
             return utils.format(
-                AggregationTemplates[this.aggregation + '_ORDER_BY'],
+                AggregateTemplates[this.aggregation + '_ORDER_BY'],
                 utils.addIdSuffix(this.id, 'Comparator'), // TODO:: create at constructor
                 expObjDef,
                 orderFillPropsDef,
@@ -361,7 +358,7 @@ function {0}(x, y) {
         else if (this.aggregation === AggregationType.NTH) {
             if (this.hasDistinct) {
                 return utils.format(
-                    AggregationTemplates.DISTINCT_NTH_ORDER_BY,
+                    AggregateTemplates.DISTINCT_NTH_ORDER_BY,
                     expObjDef,
                     orderFillPropsDef,
                     this.defineValReference('Distinct')
@@ -369,7 +366,7 @@ function {0}(x, y) {
             }
             else {
                 return utils.format(
-                    AggregationTemplates.NTH_ORDER_BY,
+                    AggregateTemplates.NTH_ORDER_BY,
                     expObjDef,
                     orderFillPropsDef
                 );
@@ -377,10 +374,10 @@ function {0}(x, y) {
         }
         else if (this.aggregation === AggregationType.CONCAT) {
             if (this.hasDistinct) {
-                return utils.format(AggregationTemplates.DISTINCT_CONCAT, this.code, expObjDef, orderFillPropsDef, this.defineValReference('Distinct'));
+                return utils.format(AggregateTemplates.DISTINCT_CONCAT, this.code, expObjDef, orderFillPropsDef, this.defineValReference('Distinct'));
             }
             else {
-                return utils.format(AggregationTemplates.CONCAT, this.code, expObjDef, orderFillPropsDef);
+                return utils.format(AggregateTemplates.CONCAT, this.code, expObjDef, orderFillPropsDef);
             }
         }
     }
@@ -393,15 +390,13 @@ function {0}(x, y) {
         switch(this.aggregation) {
             case AggregationType.NTH: {
                 if (this.hasExtendedSorting()) {
-                    valRef = utils.format('{0} = {0} ? {0}.val : null;', expObjRef);
+                    valRef = SortingFromatter.getSortedValRefDefinition(expObjRef);
                 }
                 else {
-                    valRef = ''
+                    valRef = '';
                 }
 
-                return utils.format(
-`{0} = {0}.sort({1})[{3}];
-{2}`,
+                return SortingFromatter.getNthSortingOutputDefinition(
                     expObjRef,
                     comparatorId,
                     valRef,
@@ -411,15 +406,7 @@ function {0}(x, y) {
             case AggregationType.CONCAT: {
                 valRef = this.hasExtendedSorting() ? '.val' : '';
 
-                return utils.format(
-`__val__ = {0}.sort({1});
-__tempRes__ = [];
-__length__ = __val__.length;
-for (__i__ = 0; __i__ < __length__; __i__++) {
-    __tempRes__.push(__val__[__i__]{2});
-}
-{0} = __tempRes__;
-`,
+                return SortingFromatter.getComplexSortingOutputDefinition(
                     expObjRef,
                     comparatorId,
                     valRef
@@ -429,136 +416,9 @@ for (__i__ = 0; __i__ < __length__; __i__++) {
         }
     }
 
-    private defineComparision(sorting: Sorting): string {
-        var hasExtendedSorting: boolean = this.hasExtendedSorting();
-
-        var comparisions = utils.reduce(sorting, (acc: string, orderBy: OrderBy) => {
-            var compareVal: string;
-
-            if (hasExtendedSorting) {
-                compareVal = '.' + (orderBy.isOrderedByValue() ? 'val' : orderBy.id);
-            }
-            else {
-                compareVal = '';
-            }
-
-            var isASC: boolean = orderBy.isAscending();
-
-            return utils.format(
-                acc,
-                QueryFormatter.formatComparision(
-                    '{0}',
-                    (isASC ? 'x' : 'y') + compareVal,
-                    (isASC ? 'y' : 'x') + compareVal
-                )
-            );
-        }, '{0}');
-
-        return utils.format(comparisions, '0');
-    }
-
     private getFirstArgument(): string {
         return this.arguments[0] ? this.arguments[0].code : '';
     }
-}
-
-abstract class AggregationTemplates {
-    public static format(aggrType: string, expCode: string, expObjDef: string, distinctRef: string = ''): string {
-        return utils.format(
-            AggregationTemplates[aggrType],
-            expCode,
-            expObjDef,
-            distinctRef
-        );
-    }
-
-    public static SUM =
-`    __val__ = {0};
-    if (__val__)
-        {1} = ({1} || 0) + __val__;`;
-    public static DISTINCT_SUM =
-`    __val__ = {0};
-    if (__val__ && {2}[__val__] !== true) {
-        {1} = ({1} || 0) + __val__;
-        {2}[__val__] = true;
-    }`;
-    public static MIN =
-`    __val__ = {0};
-    if (__val__ != null && ({1} > __val__ || {1} == null))
-        {1} = __val__;`;
-    public static MAX =
-`    __val__ = {0};
-    if (__val__ != null && ({1} < __val__ || {1} == null))
-        {1} = __val__;`;
-    public static FIRST =
-`    if ({2} === 1)
-        {1} = {0};`
-    public static FIRST_ORDER_BY =
-`    __val__ = {2};
-    if ({3} === 1 || {0}({1}, __val__) > 0)
-        {1} = __val__;`
-    public static LAST =
-`    {1} = {0};`;
-    public static LAST_ORDER_BY =
-`    __val__ = {2};
-    if ({3} === 1 || {0}(__val__, {1}) > 0)
-        {1} = __val__;`;
-    public static NTH =
-`    if ({2} == {3})
-        {1} = {0}`;
-    public static DISTINCT_NTH =
-`    __val__ = {0};
-    if ({3}[__val__] !== true) {
-        if ({4} == {2})
-            {1} = __val__;
-        else {
-            {3}[__val__] = true;
-            {4}++;
-        }
-    }`;
-    public static NTH_ORDER_BY =
-`    {0}.push({1});`;
-    public static DISTINCT_NTH_ORDER_BY =
-`    __val__ = {1};
-    if ({2}[__val__] !== true) {
-        {0}.push(__val__);
-        {2}[__val__] = true;
-    }`;
-    public static COUNT =
-`    if (({0}) != null)
-        {1}++;`;
-    public static DISTINCT_COUNT =
-`    __val__ = {0};
-    if (__val__ != null && {2}[__val__] !== true) {
-        {1}++;
-        {2}[__val__] = true;
-    }`;
-    public static AVG =
-`    __val__ = {0}
-    if (__val__ != null)
-        { {1}.count++; {1}.val += __val__; };`;
-    public static DISTINCT_AVG =
-`    __val__ = {0}
-    if (__val__ != null && {2}[__val__] !== true) {
-        {1}.count++;
-        {1}.val += __val__;
-        {2}[__val__] = true;
-    };`;
-    public static CONCAT =
-`    __val__ = {0};
-    if (__val__ != null)
-        {1}.push({2});`;
-    public static DISTINCT_CONCAT =
-`    __val__ = {0};
-    if (__val__ != null && {3}[__val__] !== true) {
-        {1}.push({2});
-        {3}[__val__] = true;
-    }`;
-}
-
-enum PostProcessingTemplates {
-    AVG = '{0} = {0}.val / ({0}.count || 1);',
-    CONCAT = '{2}{0} = {0}.join({1});'
 }
 
 const BY_ALL = 'ALL';

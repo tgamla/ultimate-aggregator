@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "./expression", "./groupBy", "./orderBy", "../common/formatter", "../helpers/aggregateParser", "../constants/aggregationType", "../constants/expressionType"], factory);
+        define(["require", "exports", "../common/utils", "./expression", "./groupBy", "./orderBy", "../helpers/aggregateParser", "../constants/aggregationType", "../constants/expressionType", "../formatters/aggregateFormatter", "../formatters/sortingFormatter"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -23,10 +23,11 @@ var __extends = (this && this.__extends) || (function () {
     var expression_1 = require("./expression");
     var groupBy_1 = require("./groupBy");
     var orderBy_1 = require("./orderBy");
-    var formatter_1 = require("../common/formatter");
     var aggregateParser_1 = require("../helpers/aggregateParser");
     var aggregationType_1 = require("../constants/aggregationType");
     var expressionType_1 = require("../constants/expressionType");
+    var aggregateFormatter_1 = require("../formatters/aggregateFormatter");
+    var sortingFormatter_1 = require("../formatters/sortingFormatter");
     var Aggregate = /** @class */ (function (_super) {
         __extends(Aggregate, _super);
         function Aggregate(logger, rawExpression, aggregation, queryQuotes, queryExpressions, groupId, grouping, level, isPrimalAggregation, args, over, sorting) {
@@ -100,29 +101,29 @@ var __extends = (this && this.__extends) || (function () {
             else if (this.aggregation === aggregationType_1.AggregationType.NTH) {
                 var nthNo = this.getFirstArgument() || '1';
                 if (this.hasDistinct) {
-                    return utils.format(AggregationTemplates.DISTINCT_NTH, this.code, expObjDef, nthNo, this.defineValReference('Distinct'), this.defineValReference('DistinctLength'));
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.DISTINCT_NTH, this.code, expObjDef, nthNo, this.defineValReference('Distinct'), this.defineValReference('DistinctLength'));
                 }
                 else {
-                    return utils.format(AggregationTemplates.NTH, this.code, expObjDef, this.hasGroupIndex ? this.parentGroupingId + '.groupIndex' : 'index', nthNo);
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.NTH, this.code, expObjDef, this.hasGroupIndex ? this.parentGroupingId + '.groupIndex' : 'index', nthNo);
                 }
             }
             else if (this.aggregation === aggregationType_1.AggregationType.CONCAT) {
                 if (this.hasDistinct) {
-                    return utils.format(AggregationTemplates.DISTINCT_CONCAT, this.code, expObjDef, '__val__', this.defineValReference('Distinct'));
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.DISTINCT_CONCAT, this.code, expObjDef, '__val__', this.defineValReference('Distinct'));
                 }
                 else {
-                    return utils.format(AggregationTemplates.CONCAT, this.code, expObjDef, '__val__');
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.CONCAT, this.code, expObjDef, '__val__');
                 }
             }
             else if (this.aggregation === aggregationType_1.AggregationType.FIRST) {
-                return utils.format(AggregationTemplates.FIRST, this.code, expObjDef, this.hasGroupIndex ? this.parentGroupingId + '.groupIndex' : 'index');
+                return utils.format(aggregateFormatter_1.AggregateTemplates.FIRST, this.code, expObjDef, this.hasGroupIndex ? this.parentGroupingId + '.groupIndex' : 'index');
             }
             else {
                 if (this.hasDistinct) {
-                    return AggregationTemplates.format('DISTINCT_' + this.aggregation, this.code, expObjDef, this.defineValReference('Distinct'));
+                    return aggregateFormatter_1.AggregateFromatter.getAggrDefinition('DISTINCT_' + this.aggregation, this.code, expObjDef, this.defineValReference('Distinct'));
                 }
                 else {
-                    return AggregationTemplates.format(this.aggregation, this.code, expObjDef);
+                    return aggregateFormatter_1.AggregateFromatter.getAggrDefinition(this.aggregation, this.code, expObjDef);
                 }
             }
         };
@@ -136,20 +137,20 @@ var __extends = (this && this.__extends) || (function () {
                     }
                     break;
                 case aggregationType_1.AggregationType.AVG: {
-                    return utils.format(PostProcessingTemplates.AVG, this.defineExpObjRef());
+                    return aggregateFormatter_1.AggregateFromatter.getPostProcessingAvgDefinition(this.defineExpObjRef());
                 }
                 case aggregationType_1.AggregationType.CONCAT: {
                     var sorting = this.sorting ?
                         this.defineSorting() : '';
                     var delimiter = this.getFirstArgument() || '", "';
-                    return utils.format(PostProcessingTemplates.CONCAT, this.defineExpObjRef(), delimiter, sorting);
+                    return aggregateFormatter_1.AggregateFromatter.getPostProcessingConcatDefinition(this.defineExpObjRef(), delimiter, sorting);
                 }
             }
             return '';
         };
         Aggregate.prototype.defineSortingComparator = function () {
             if (this.sorting) {
-                return utils.format("\nfunction {0}(x, y) {\n    return {1};\n}\n", utils.addIdSuffix(this.id, 'Comparator'), this.defineComparision(this.sorting));
+                return sortingFormatter_1.SortingFromatter.getSortingFnDefinition(utils.addIdSuffix(this.id, 'Comparator'), this.sorting, this.hasExtendedSorting());
             }
         };
         Aggregate.prototype.defineExpObjRef = function () {
@@ -199,7 +200,7 @@ var __extends = (this && this.__extends) || (function () {
             }
         };
         Aggregate.prototype.canHaveDistinct = function () {
-            return AggregationTemplates['DISTINCT_' + this.aggregation] ? true : false;
+            return aggregateFormatter_1.AggregateTemplates['DISTINCT_' + this.aggregation] ? true : false;
         };
         Aggregate.prototype.findSibling = function (queryExpressions) {
             var _this = this;
@@ -285,23 +286,23 @@ var __extends = (this && this.__extends) || (function () {
                 orderFillPropsDef = this.code;
             }
             if (this.aggregation === aggregationType_1.AggregationType.FIRST || this.aggregation === aggregationType_1.AggregationType.LAST) {
-                return utils.format(AggregationTemplates[this.aggregation + '_ORDER_BY'], utils.addIdSuffix(this.id, 'Comparator'), // TODO:: create at constructor
+                return utils.format(aggregateFormatter_1.AggregateTemplates[this.aggregation + '_ORDER_BY'], utils.addIdSuffix(this.id, 'Comparator'), // TODO:: create at constructor
                 expObjDef, orderFillPropsDef, this.parentGroupingId ? this.parentGroupingId + '.groupIndex' : 'index');
             }
             else if (this.aggregation === aggregationType_1.AggregationType.NTH) {
                 if (this.hasDistinct) {
-                    return utils.format(AggregationTemplates.DISTINCT_NTH_ORDER_BY, expObjDef, orderFillPropsDef, this.defineValReference('Distinct'));
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.DISTINCT_NTH_ORDER_BY, expObjDef, orderFillPropsDef, this.defineValReference('Distinct'));
                 }
                 else {
-                    return utils.format(AggregationTemplates.NTH_ORDER_BY, expObjDef, orderFillPropsDef);
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.NTH_ORDER_BY, expObjDef, orderFillPropsDef);
                 }
             }
             else if (this.aggregation === aggregationType_1.AggregationType.CONCAT) {
                 if (this.hasDistinct) {
-                    return utils.format(AggregationTemplates.DISTINCT_CONCAT, this.code, expObjDef, orderFillPropsDef, this.defineValReference('Distinct'));
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.DISTINCT_CONCAT, this.code, expObjDef, orderFillPropsDef, this.defineValReference('Distinct'));
                 }
                 else {
-                    return utils.format(AggregationTemplates.CONCAT, this.code, expObjDef, orderFillPropsDef);
+                    return utils.format(aggregateFormatter_1.AggregateTemplates.CONCAT, this.code, expObjDef, orderFillPropsDef);
                 }
             }
         };
@@ -312,34 +313,19 @@ var __extends = (this && this.__extends) || (function () {
             switch (this.aggregation) {
                 case aggregationType_1.AggregationType.NTH: {
                     if (this.hasExtendedSorting()) {
-                        valRef = utils.format('{0} = {0} ? {0}.val : null;', expObjRef);
+                        valRef = sortingFormatter_1.SortingFromatter.getSortedValRefDefinition(expObjRef);
                     }
                     else {
                         valRef = '';
                     }
-                    return utils.format("{0} = {0}.sort({1})[{3}];\n{2}", expObjRef, comparatorId, valRef, (parseInt(this.getFirstArgument() || '1') - 1).toString());
+                    return sortingFormatter_1.SortingFromatter.getNthSortingOutputDefinition(expObjRef, comparatorId, valRef, (parseInt(this.getFirstArgument() || '1') - 1).toString());
                 }
                 case aggregationType_1.AggregationType.CONCAT: {
                     valRef = this.hasExtendedSorting() ? '.val' : '';
-                    return utils.format("__val__ = {0}.sort({1});\n__tempRes__ = [];\n__length__ = __val__.length;\nfor (__i__ = 0; __i__ < __length__; __i__++) {\n    __tempRes__.push(__val__[__i__]{2});\n}\n{0} = __tempRes__;\n", expObjRef, comparatorId, valRef);
+                    return sortingFormatter_1.SortingFromatter.getComplexSortingOutputDefinition(expObjRef, comparatorId, valRef);
                 }
                 default: return '';
             }
-        };
-        Aggregate.prototype.defineComparision = function (sorting) {
-            var hasExtendedSorting = this.hasExtendedSorting();
-            var comparisions = utils.reduce(sorting, function (acc, orderBy) {
-                var compareVal;
-                if (hasExtendedSorting) {
-                    compareVal = '.' + (orderBy.isOrderedByValue() ? 'val' : orderBy.id);
-                }
-                else {
-                    compareVal = '';
-                }
-                var isASC = orderBy.isAscending();
-                return utils.format(acc, formatter_1.QueryFormatter.formatComparision('{0}', (isASC ? 'x' : 'y') + compareVal, (isASC ? 'y' : 'x') + compareVal));
-            }, '{0}');
-            return utils.format(comparisions, '0');
         };
         Aggregate.prototype.getFirstArgument = function () {
             return this.arguments[0] ? this.arguments[0].code : '';
@@ -347,37 +333,5 @@ var __extends = (this && this.__extends) || (function () {
         return Aggregate;
     }(expression_1.Expression));
     exports.Aggregate = Aggregate;
-    var AggregationTemplates = /** @class */ (function () {
-        function AggregationTemplates() {
-        }
-        AggregationTemplates.format = function (aggrType, expCode, expObjDef, distinctRef) {
-            if (distinctRef === void 0) { distinctRef = ''; }
-            return utils.format(AggregationTemplates[aggrType], expCode, expObjDef, distinctRef);
-        };
-        AggregationTemplates.SUM = "    __val__ = {0};\n    if (__val__)\n        {1} = ({1} || 0) + __val__;";
-        AggregationTemplates.DISTINCT_SUM = "    __val__ = {0};\n    if (__val__ && {2}[__val__] !== true) {\n        {1} = ({1} || 0) + __val__;\n        {2}[__val__] = true;\n    }";
-        AggregationTemplates.MIN = "    __val__ = {0};\n    if (__val__ != null && ({1} > __val__ || {1} == null))\n        {1} = __val__;";
-        AggregationTemplates.MAX = "    __val__ = {0};\n    if (__val__ != null && ({1} < __val__ || {1} == null))\n        {1} = __val__;";
-        AggregationTemplates.FIRST = "    if ({2} === 1)\n        {1} = {0};";
-        AggregationTemplates.FIRST_ORDER_BY = "    __val__ = {2};\n    if ({3} === 1 || {0}({1}, __val__) > 0)\n        {1} = __val__;";
-        AggregationTemplates.LAST = "    {1} = {0};";
-        AggregationTemplates.LAST_ORDER_BY = "    __val__ = {2};\n    if ({3} === 1 || {0}(__val__, {1}) > 0)\n        {1} = __val__;";
-        AggregationTemplates.NTH = "    if ({2} == {3})\n        {1} = {0}";
-        AggregationTemplates.DISTINCT_NTH = "    __val__ = {0};\n    if ({3}[__val__] !== true) {\n        if ({4} == {2})\n            {1} = __val__;\n        else {\n            {3}[__val__] = true;\n            {4}++;\n        }\n    }";
-        AggregationTemplates.NTH_ORDER_BY = "    {0}.push({1});";
-        AggregationTemplates.DISTINCT_NTH_ORDER_BY = "    __val__ = {1};\n    if ({2}[__val__] !== true) {\n        {0}.push(__val__);\n        {2}[__val__] = true;\n    }";
-        AggregationTemplates.COUNT = "    if (({0}) != null)\n        {1}++;";
-        AggregationTemplates.DISTINCT_COUNT = "    __val__ = {0};\n    if (__val__ != null && {2}[__val__] !== true) {\n        {1}++;\n        {2}[__val__] = true;\n    }";
-        AggregationTemplates.AVG = "    __val__ = {0}\n    if (__val__ != null)\n        { {1}.count++; {1}.val += __val__; };";
-        AggregationTemplates.DISTINCT_AVG = "    __val__ = {0}\n    if (__val__ != null && {2}[__val__] !== true) {\n        {1}.count++;\n        {1}.val += __val__;\n        {2}[__val__] = true;\n    };";
-        AggregationTemplates.CONCAT = "    __val__ = {0};\n    if (__val__ != null)\n        {1}.push({2});";
-        AggregationTemplates.DISTINCT_CONCAT = "    __val__ = {0};\n    if (__val__ != null && {3}[__val__] !== true) {\n        {1}.push({2});\n        {3}[__val__] = true;\n    }";
-        return AggregationTemplates;
-    }());
-    var PostProcessingTemplates;
-    (function (PostProcessingTemplates) {
-        PostProcessingTemplates["AVG"] = "{0} = {0}.val / ({0}.count || 1);";
-        PostProcessingTemplates["CONCAT"] = "{2}{0} = {0}.join({1});";
-    })(PostProcessingTemplates || (PostProcessingTemplates = {}));
     var BY_ALL = 'ALL';
 });

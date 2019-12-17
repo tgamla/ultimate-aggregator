@@ -4,6 +4,7 @@ import { Expression } from '../expressions/expression';
 import { GroupBy, Grouping } from '../expressions/groupBy';
 import { Sorting } from '../expressions/orderBy';
 
+
 export class GroupComposition {
     id: string;
     selection: Selector;
@@ -31,38 +32,51 @@ export class GroupComposition {
         this.hasParentGrouping = hasParentGrouping;
     }
 
-    public getInitVariable(): string {
+    getInitVariable(): string {
         var initValue: string;
+        
         switch(this.outputType) {
             case OutputType.AS_LIST: initValue = '[]'; break;
             case OutputType.AS_OBJECT: initValue = '{}'; break;
             default: initValue = 'null';
         };
-        return utils.format('{0} = {1}',
-            this.id,
-            initValue
-        );
+        
+        return `${this.id} = ${initValue}`;
     }
 
-    public isSubSelectorGroup(): boolean {
+    getGroupVariableDeclarations(): Array<string> {
+        return utils.reduce<GroupComposition, Array<string>>(this.innerGroups, (declarations, group) => {
+            if (group.isSubSelectorGroup()) {
+                if (group.hasParentGrouping) {
+                    declarations.push(group.id);
+                }
+                else {
+                    declarations.push(group.getInitVariable());
+                }
+            }
+            return declarations.concat(group.getGroupVariableDeclarations());
+        }, []);
+    }
+
+    isSubSelectorGroup(): boolean {
         return !this.isMain && !this.isUngroup;
     }
 
-    public hasSorting(): boolean {
+    hasSorting(): boolean {
         return this.sorting.length > 0;
     }
 
-    public getSubGroups(): Array<GroupComposition> {
+    getSubGroups(): Array<GroupComposition> {
         return this.innerGroups.filter((innerGroup) => !innerGroup.isUngroup);
     }
 
-    public getUngroupReference(): string {
+    getUngroupReference(): string {
         var directGrouping = this.grouping[this.grouping.length - 1];
         var groupingId = directGrouping ? directGrouping.id : '__groupings__';
         return groupingId + '.' + this.id;
     }
 
-    public extendChildGrouping(logger: Logger, grouping: Grouping): Grouping {
+    extendChildGrouping(logger: Logger, grouping: Grouping): Grouping {
         var childGrouping: Grouping = utils.copy(this.grouping);
 
         utils.forEach(grouping, (groupBy: GroupBy) => {
@@ -80,7 +94,7 @@ export class GroupComposition {
         return childGrouping;
     }
 
-    public defineSorting(): string {
+    defineSorting(): string {
         return this.hasSorting() ?
             '.sort(' + utils.addIdSuffix(this.id, 'Comparator') + ')' :
             '';

@@ -1,6 +1,6 @@
 import * as utils from '../common/utils';
 import { Expression, Quotes, ExpressionRegExps } from './expression';
-import { QueryFormatter as Formatter } from '../common/formatter';
+import { SortingFromatter } from '../formatters/sortingFormatter';
 import { ExpressionType } from '../constants/expressionType';
 
 
@@ -31,25 +31,25 @@ export class OrderBy extends Expression {
         }
     }
 
-    public equals(oderBy: OrderBy): boolean {
+    equals(oderBy: OrderBy): boolean {
         return super.equals(oderBy) && this.orderDirection === oderBy.orderDirection;
     }
 
-    public compareToAggregation(exp: Expression): void {
+    compareToAggregation(exp: Expression): void {
         if (!this.isOrderedByValue() && super.equals(exp)) {
             this.code = ORDER_BY_VALUE;
         }
     }
 
-    public isOrderedByValue(): boolean {
+    isOrderedByValue(): boolean {
         return this.code === ORDER_BY_VALUE;
     }
 
-    public isAscending(): boolean {
+    isAscending(): boolean {
         return this.orderDirection === OrderByDirection.ASC;
     }
 
-    public static compareSorting(sortingA: Sorting, sortingB: Sorting): boolean {
+    static compareSorting(sortingA: Sorting, sortingB: Sorting): boolean {
         return (
                 sortingA instanceof Array && sortingB instanceof Array &&
                 sortingA.length == sortingB.length &&
@@ -58,7 +58,7 @@ export class OrderBy extends Expression {
             (sortingA === sortingB);
     }
 
-    public static defineComparator(sorting: Sorting): string {
+    static defineComparator(sorting: Sorting): string {
         var valuesDeclarations: string = '';
         var comparisions: string = utils.reduce<OrderBy, string>(sorting, (compDef, orderBy, index) => {
             var isASC: boolean = orderBy.isAscending();
@@ -66,7 +66,7 @@ export class OrderBy extends Expression {
             if (orderBy.isOrderedByValue()) {
                 return utils.format(
                     compDef,
-                    Formatter.formatComparision(
+                    SortingFromatter.getValuesComparisionDefinition(
                         '{0}',
                         (isASC ? 'out' : '__outB__'),
                         (isASC ? '__outB__' : 'out')
@@ -78,18 +78,11 @@ export class OrderBy extends Expression {
                 var xValue: string = orderBy.code;
                 var yValue: string = orderBy.code.replace(ExpressionRegExps.OUT, '$1__outB__$2');
 
-                valuesDeclarations += utils.format(
-`    var __x{0}__ = {1};
-    var __y{0}__ = {2};
-`,
-                    valRef,
-                    xValue,
-                    yValue
-                );
+                valuesDeclarations += SortingFromatter.getValuesDeclarationDefinition(valRef, xValue, yValue);
     
                 return utils.format(
                     compDef,
-                    Formatter.formatComparision(
+                    SortingFromatter.getValuesComparisionDefinition(
                         '{0}',
                         '__' + (isASC ? 'x' : 'y') + valRef + '__',
                         '__' + (isASC ? 'y' : 'x') + valRef + '__'

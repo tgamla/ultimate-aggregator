@@ -13,23 +13,23 @@ interface IBaseGroup<T> extends IBaseQuery<T> {
     uniformed(apply?: boolean): IBaseGroup<T>;
 }
 
-interface IQuery {
-    config(config: IConfig): IQuery;
-    addContext(reference: Object | Function | string, value: any): IQuery;
-    removeContext(reference?: Object | string): IQuery;
-    preFilter(filter?: /* TODO:: Function | */ string): IQuery;
+interface IQuery<T> {
+    config(config: IConfig): IQuery<T>;
+    addContext(reference: Object | Function | string, value: any): IQuery<T>;
+    removeContext(reference?: Object | string): IQuery<T>;
+    preFilter(filter?: /* TODO:: Function | */ string): IQuery<T>;
     // TODO:: preOrderBy(filter?: Function | Array<string> | string): IQuery;
     // TODO:: define(varName: string, definition: string): IQuery;
-    select(): IQuery;
-    from(datasource?: Array<any> | Object | IQuery): IQuery;
-    groupBy(grouping?: string | Array<string>): IQuery;
-    filter(filter?: /* TODO:: Function | */ string): IQuery;
-    orderBy(sorting?: /* Function | */ Array<string> | string): IQuery;
+    select(): IQuery<T>;
+    from(datasource?: Array<any> | Object | IQuery<any>): IQuery<T>;
+    groupBy(grouping?: string | Array<string>): IQuery<T>;
+    filter(filter?: /* TODO:: Function | */ string): IQuery<T>;
+    orderBy(sorting?: /* Function | */ Array<string> | string): IQuery<T>;
     // TODO:: range(start: number, end?: number): IQuery;
     // TODO:: toObject(labelDef?: string): Object;
-    toList(): Array<any>;
+    toList(): T; // TODO:: Promise<T> | Observable<T>
     // TODO:: toValue(): any;
-    execute(datasource?: Array<any> | Object | IQuery): any;
+    execute(datasource?: Array<any> | Object | IQuery<any>): T; // TODO:: Promise<T> | Observable<T>
     // TODO:: clone(): IQuery;
     // TODO:: toString(): string;
 }
