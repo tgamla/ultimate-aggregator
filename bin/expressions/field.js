@@ -14,17 +14,18 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../common/logger", "./expression", "./groupBy", "../helpers/aggregateParser", "../constants/expressionType"], factory);
+        define(["require", "exports", "../common/logger", "../common/utils", "../constants/expressionType", "../constants/regexps", "../helpers/aggregateParser", "./expression", "./groupBy"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var utils = require("../common/utils");
     var logger_1 = require("../common/logger");
+    var utils = require("../common/utils");
+    var expressionType_1 = require("../constants/expressionType");
+    var REG_EXPS = require("../constants/regexps");
+    var aggregateParser_1 = require("../helpers/aggregateParser");
     var expression_1 = require("./expression");
     var groupBy_1 = require("./groupBy");
-    var aggregateParser_1 = require("../helpers/aggregateParser");
-    var expressionType_1 = require("../constants/expressionType");
     var Field = /** @class */ (function (_super) {
         __extends(Field, _super);
         function Field(logger, rawExpression, queryQuotes, queryExpressions, groupId, grouping, isWithinUngroup, level) {
@@ -70,7 +71,7 @@ var __extends = (this && this.__extends) || (function () {
         Field.prototype.handleNonAggrFields = function () {
             var _this = this;
             if (this.parentGroupingId && !this.level) {
-                this.code = this.code.replace(expression_1.ExpressionRegExps.ROW, function () {
+                this.code = this.code.replace(REG_EXPS.ROW, function () {
                     var args = [];
                     for (var _i = 0; _i < arguments.length; _i++) {
                         args[_i] = arguments[_i];
@@ -81,7 +82,7 @@ var __extends = (this && this.__extends) || (function () {
             }
         };
         Field.prototype.handleIndex = function (logger, isWithinUngroup) {
-            if (this.checkIndex()) {
+            if (this.checkForIndex()) {
                 if (!isWithinUngroup && this.parentGroupingId) {
                     logger.warning(logger_1.MessageCodes.INDEX_USED_IN_GROUP, this.raw);
                 }

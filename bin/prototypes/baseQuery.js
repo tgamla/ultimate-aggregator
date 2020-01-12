@@ -4,13 +4,13 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../aggregateFunction"], factory);
+        define(["require", "exports", "../aggregateFunction", "../common/utils"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var utils = require("../common/utils");
     var aggregateFunction_1 = require("../aggregateFunction");
+    var utils = require("../common/utils");
     var BaseQuery = /** @class */ (function () {
         function BaseQuery(type) {
             this.id = utils.generateId();
@@ -65,8 +65,8 @@
             this._select = utils.map(args, function (arg) { return _this.copySelect(arg); })[0]; // TODO:: remove index slector
         };
         BaseQuery.prototype.applyList = function (rawList, appliedListRef) {
-            var hasAnyChanged = false;
             var appliedList = this[appliedListRef];
+            var hasAnyChanged = false;
             if (rawList == null) {
                 if (appliedList.length !== 0) {
                     this[appliedListRef] = [];
@@ -80,13 +80,13 @@
                 }
             }
             else if (rawList instanceof Array) {
-                var newList = [];
+                var newList_1 = [];
                 if (utils.some(rawList, function (element, index) {
                     if (typeof element === 'string') {
                         if (!hasAnyChanged) {
                             hasAnyChanged = element !== appliedList[index];
                         }
-                        newList.push(element);
+                        newList_1.push(element);
                         return false;
                     }
                     // TODO:: warning
@@ -94,8 +94,8 @@
                 })) {
                     hasAnyChanged = false;
                 }
-                else if (hasAnyChanged || newList.length !== appliedList.length) {
-                    this[appliedListRef] = newList;
+                else if (hasAnyChanged || newList_1.length !== appliedList.length) {
+                    this[appliedListRef] = newList_1;
                     hasAnyChanged = true;
                 }
             }
@@ -103,6 +103,27 @@
                 // TODO:: warning
             }
             return hasAnyChanged;
+        };
+        BaseQuery.prototype.applyDistinct = function (apply) {
+            if (apply === void 0) { apply = false; }
+            var newVal = !!(apply);
+            if (this._distinct === newVal) {
+                return false;
+            }
+            this._distinct = newVal;
+            return true;
+        };
+        BaseQuery.prototype.applyFilter = function (rawFilter) {
+            if (this._filter !== rawFilter) {
+                this._filter = rawFilter;
+                return true;
+            }
+            return false;
+        };
+        BaseQuery.prototype.copyTo = function (copy) {
+            copy.orderBy(this._orderBy)
+                .filter(this._filter)
+                .distinct(this._distinct);
         };
         BaseQuery.prototype.copySelect = function (selection) {
             var _this = this;
@@ -127,27 +148,6 @@
                 }
             }
             return selection;
-        };
-        BaseQuery.prototype.applyDistinct = function (apply) {
-            if (apply === void 0) { apply = false; }
-            var newVal = apply ? true : false;
-            if (this._distinct == newVal) {
-                return false;
-            }
-            this._distinct = newVal;
-            return true;
-        };
-        BaseQuery.prototype.applyFilter = function (rawFilter) {
-            if (this._filter !== rawFilter) {
-                this._filter = rawFilter;
-                return true;
-            }
-            return false;
-        };
-        BaseQuery.prototype.copyTo = function (copy) {
-            copy.orderBy(this._orderBy)
-                .filter(this._filter)
-                .distinct(this._distinct);
         };
         return BaseQuery;
     }());

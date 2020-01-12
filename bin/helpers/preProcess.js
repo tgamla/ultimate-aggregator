@@ -4,14 +4,13 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../expressions/expression", "../constants/expressionType"], factory);
+        define(["require", "exports", "../constants/expressionType", "../expressions/expression"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var utils = require("../common/utils");
-    var expression_1 = require("../expressions/expression");
     var expressionType_1 = require("../constants/expressionType");
+    var expression_1 = require("../expressions/expression");
     var PreProcess = /** @class */ (function () {
         function PreProcess(rawExpression) {
             this.isNew = true;
@@ -23,7 +22,7 @@
             if (this.filter.code === '') {
                 logger.log('Pre filter expression is empty.'); // TODO:: move to MessageCodes
             }
-            var fn = new Function('__quotes__', 'data', utils.format("var __results__ = [], prop, row;\nfor (prop in data) {\n    row = data[prop];\n    if (({0}))\n        __results__.push(row);\n}\n\nreturn __results__;", this.filter.code));
+            var fn = new Function('__quotes__', 'data', "var __results__ = [], prop, row;\nfor (prop in data) {\n    row = data[prop];\n    if ((" + this.filter.code + "))\n        __results__.push(row);\n}\n\nreturn __results__;");
             this.function = Function.prototype.bind.apply(fn, [fn, this.quotes]);
             this.isNew = false;
         };

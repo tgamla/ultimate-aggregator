@@ -100,7 +100,7 @@ describe('Test Query', () => {
                 .from(function() {});
 
             assert.equal(
-                JSON.stringify(query.datasource),
+                JSON.stringify(query.dataSource),
                 JSON.stringify([])
                 );
         });
@@ -111,7 +111,7 @@ describe('Test Query', () => {
                 .from({ x: 1 });
 
             assert.equal(
-                JSON.stringify(query.datasource),
+                JSON.stringify(query.dataSource),
                 JSON.stringify({ x: 1 })
                 );
         });
@@ -122,7 +122,7 @@ describe('Test Query', () => {
                 .from([1, 2, 3]);
 
             assert.equal(
-                JSON.stringify(query.datasource),
+                JSON.stringify(query.dataSource),
                 JSON.stringify([1,2,3])
                 );
         });

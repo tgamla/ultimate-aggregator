@@ -1,9 +1,9 @@
-interface Iterator<T> {
-    (val: T, prop?: string): void;
-}
-export function forEach<El>(source: any, iterator: Iterator<El>): void {
+
+type IIterator<T> = (val: T, prop?: string) => void;
+
+export function forEach<El>(source: any, iterator: IIterator<El>): void {
     if (source instanceof Array || (typeof source === 'object' && source !== null)) {
-        for (var prop in source) {
+        for (const prop in source) {
             if (source.hasOwnProperty(prop)) {
                 iterator(source[prop], prop);
             }
@@ -14,19 +14,18 @@ export function forEach<El>(source: any, iterator: Iterator<El>): void {
     }
 }
 
-export function forEachRecursive<El>(source: any, inner: string, iterator: Iterator<El>): void {
+export function forEachRecursive<El>(source: any, inner: string, iterator: IIterator<El>): void {
     forEach<El>(source[inner], (elem: El, prop: string) => {
         iterator(elem, prop);
-        if (elem != null && typeof elem == 'object' && elem[inner]) {
+        if (elem != null && typeof elem === 'object' && elem[inner]) {
             forEachRecursive<El>(elem, inner, iterator);
         }
     });
 }
 
-interface Accumulator<El, Out> {
-    (acc: Out, val: El, prop?: string): Out;
-}
-export function reduce<El, Out>(source: any, iterator: Accumulator<El, Out>, accumulator: Out): Out {
+type IAccumulator<El, Out> = (acc: Out, val: El, prop?: string) => Out;
+
+export function reduce<El, Out>(source: any, iterator: IAccumulator<El, Out>, accumulator: Out): Out {
     forEach<El>(source, (val, prop) => {
         accumulator = iterator(accumulator, val, prop);
     });
@@ -34,11 +33,10 @@ export function reduce<El, Out>(source: any, iterator: Accumulator<El, Out>, acc
     return accumulator;
 }
 
-interface MapIterator<El, Out> {
-    (val: El, prop?: string): Out;
-}
-export function map<InEl, OutEl>(source: any, iterator: MapIterator<InEl, OutEl>): Array<OutEl> {
-    var res: Array<OutEl> = [];
+type IMapIterator<El, Out> = (val: El, prop?: string) => Out;
+
+export function map<InEl, OutEl>(source: any, iterator: IMapIterator<InEl, OutEl>): OutEl[] {
+    const res: OutEl[] = [];
 
     forEach<InEl>(source, (val, prop) =>
         res.push(iterator(val, prop))
@@ -47,9 +45,9 @@ export function map<InEl, OutEl>(source: any, iterator: MapIterator<InEl, OutEl>
     return res;
 }
 
-export function reverseMap<InEl, OutEl>(source: any, iterator: MapIterator<InEl, OutEl>): Array<OutEl> {
-    var reversedProperties: Array<string> = Object.keys(source).reverse();
-    var res: Array<OutEl> = [];
+export function reverseMap<InEl, OutEl>(source: any, iterator: IMapIterator<InEl, OutEl>): OutEl[] {
+    const reversedProperties: string[] = Object.keys(source).reverse();
+    const res: OutEl[] = [];
 
     forEach<string>(reversedProperties, (prop) => {
         res.push(iterator(source[prop], prop));
@@ -58,9 +56,9 @@ export function reverseMap<InEl, OutEl>(source: any, iterator: MapIterator<InEl,
     return res;
 }
 
-export function find<El>(source: any, predicate: Iterator<El>): El {
+export function find<El>(source: any, predicate: IIterator<El>): El {
     if (!isEmpty(source)) {
-        for (var prop in source) {
+        for (const prop in source) {
             if (source.hasOwnProperty(prop) && predicate(source[prop], prop)) {
                 return source[prop];
             }
@@ -70,14 +68,13 @@ export function find<El>(source: any, predicate: Iterator<El>): El {
     return null;
 }
 
-interface IteratorReturnFound<T> {
-    (val: T, prop?: string): T;
-}
-export function returnFound<El>(source: any, predicate: IteratorReturnFound<El>): El {
+type IIteratorReturnFound<T> = (val: T, prop?: string) => T;
+
+export function returnFound<El>(source: any, predicate: IIteratorReturnFound<El>): El {
     if (!isEmpty(source)) {
-        for (var prop in source) {
+        for (const prop in source) {
             if (source.hasOwnProperty(prop)) {
-                var val = predicate(source[prop], prop);
+                const val = predicate(source[prop], prop);
                 if (val) {
                     return val;
                 }
@@ -88,9 +85,9 @@ export function returnFound<El>(source: any, predicate: IteratorReturnFound<El>)
     return null;
 }
 
-export function some<El>(source: any, predicate: Iterator<El>): boolean {
+export function some<El>(source: any, predicate: IIterator<El>): boolean {
     if (!isEmpty(source)) {
-        for (var prop in source) {
+        for (const prop in source) {
             if (source.hasOwnProperty(prop) && predicate(source[prop], prop)) {
                 return true;
             }
@@ -101,8 +98,8 @@ export function some<El>(source: any, predicate: Iterator<El>): boolean {
 }
 
 export function deepCopy<T>(source: T): T {
-    var res: T = copy<T>(source);
-
+    const res: T = copy<T>(source);
+// TODO:: filter
     forEach(res, (val, prop) => {
         if (val && typeof val === 'object') {
             res[prop] = deepCopy(val);
@@ -114,24 +111,26 @@ export function deepCopy<T>(source: T): T {
 
 export function copy<T>(source: any, output?: T): T {
     if (typeof source === 'object' && source !== null) {
-        var copy: T;
+        let copiedObj: T;
 
         if (output) {
-            copy = output;
+            copiedObj = output;
         }
         else if (source instanceof Array) {
-            copy = <T & Array<any>>[];
+            copiedObj = <T & any[]>[];
         }
         else {
-            copy = <T>{};
+            copiedObj = <T>{};
         }
 
-        copy["__proto__"] = Object.getPrototypeOf(source);
+        // TODO:: Object.setPrototypeOf(copy, Object.getPrototypeOf(source));
+        // tslint:disable-next-line
+        copy['__proto__'] = Object.getPrototypeOf(source);
 
         return reduce<T, T>(source, (copied, val, prop) => {
             copied[prop] = val;
             return copied;
-        }, copy);
+        }, copiedObj);
     }
     else {
         return <T>source;
@@ -152,9 +151,9 @@ export function keysLength(source: any): number {
     }
 }
 
-var id = 0;
+let currentId = 0;
 export function generateId(): string {
-    return formatId(++id);
+    return formatId(++currentId);
 }
 
 export function denormalizeId(id: string): string {
@@ -166,10 +165,10 @@ export function formatId(id: any) {
     return format(ID_TEMPLATE, id.toString());
 }
 
-export function format(text: String, ...args: Array<string>): string {
-    return (text || '').replace(/\{\d+}/gm, function(match): string {
-        return args[parseInt(match.substring(1, match.length - 1))];
-    });
+export function format(text: String, ...args: string[]): string {
+    return (text || '').replace(/\{\d+}/gm, (match): string =>
+        args[parseInt(match.substring(1, match.length - 1))]
+    );
 }
 
 export function addIdSuffix(id: string, suffix: string): string {

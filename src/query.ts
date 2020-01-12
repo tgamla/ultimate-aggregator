@@ -1,44 +1,44 @@
-import * as utils from './common/utils';
 import { Logger, MessageCodes } from './common/logger';
-import { QueryFormatter } from './formatters/queryFomatter';
-import { BaseQuery } from './prototypes/baseQuery';
-import { Group } from './group';
-import { Ungroup } from './ungroup';
-import { Expression, Quotes } from './expressions/expression';
-import { Field } from './expressions/field';
+import * as utils from './common/utils';
+import { ExpressionType } from './constants/expressionType';
 import { Aggregate } from './expressions/aggregate';
+import { Expression, IQuotes } from './expressions/expression';
+import { Field } from './expressions/field';
 import { GroupBy, Grouping } from './expressions/groupBy';
 import { OrderBy, Sorting } from './expressions/orderBy';
-import { GroupComposition, Selector } from './helpers/groupComposition';
+import { QueryFormatter } from './formatters/queryFomatter';
+import { Group } from './group';
+import { GroupComposition, IGroupMap } from './helpers/groupComposition';
 import { GroupingComposition } from './helpers/groupingComposition';
 import { PreProcess } from './helpers/preProcess';
+import { Selector } from './helpers/selector';
 import { BaseGroup } from './prototypes/baseGroup';
-import { ExpressionType } from './constants/expressionType';
+import { BaseQuery } from './prototypes/baseQuery';
+import { Ungroup } from './ungroup';
 
-
-export class Query extends BaseQuery<Query> implements IQuery<any> {
-    public _preFilter: string;
+export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
+    _preFilter: string;
     private preFiltering: PreProcess;
 
-    private datasource: any;
+    private dataSource: any;
     private changed: boolean;
 
-    private context: { __logger__?: Logger; __quotes__?: Quotes; string?: string };
+    private context: { __logger__?: Logger; __quotes__?: IQuotes; string?: string };
     private logger: Logger;
     private debugLevel: number;
 
-    private groupMap: GroupMap;
+    private groupMap: IGroupMap;
     private groupComposition: GroupComposition;
     private groupingComposition: GroupingComposition;
-    private allExpressions: Array<Expression>;
-    private quotes: Quotes;
+    private allExpressions: Expression[];
+    private quotes: IQuotes;
     private fn: Function;
     private code: string;
 
     constructor(config: IConfig = {}) {
         super('Query');
         this._preFilter = null;
-        this.datasource = [];
+        this.dataSource = [];
         this.allExpressions = null;
         this.quotes = null;
         this.fn = null;
@@ -49,19 +49,19 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         return this.encapsulate();
     }
 
-    config(config: IConfig): Query {
+    config(config: IConfig): Query<T> {
         if (config == null || typeof config !== 'object') {
             this.logger.warning(MessageCodes.EMPTY_CONFIG);
             return this;
         }
         this.logger = new Logger(this.id, config);
         this.debugLevel = config.debugLevel || 0;
-        
+
         return this.applyChange();
     }
 
-    addContext(reference: Object|Function|string, value?: any): Query {
-        var hasChangedContext: boolean = false;
+    addContext(reference: object|Function|string, value?: any): Query<T> {
+        let hasChangedContext: boolean = false;
 
         if (reference instanceof Function) {
             if (this.addFunction(reference)) {
@@ -92,22 +92,27 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             return this.applyChange();
         }
         else {
-            if (!this.changed)
+            if (!this.changed) {
                 this.bindFn();
+            }
+
             return this;
         }
     }
 
-    removeContext(reference: string | object): Query {
+    removeContext(reference: string | object): Query<T> {
         if (reference === undefined) {
             this.context = {};
-            if (!this.changed)
+            if (!this.changed) {
                 this.bindFn();
+            }
+
             return this;
         }
 
-        var hasChanged = false;
-        var refType = typeof reference;
+        const refType = typeof reference;
+        let hasChanged = false;
+
         if (refType === 'string') {
             if (this.context.hasOwnProperty(<string>reference)) {
                 hasChanged = true;
@@ -130,7 +135,7 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         return this.applyChange(hasChanged);
     }
 
-    preFilter(filter?: /* TODO:: Function | */ string): Query {
+    preFilter(filter?: /* TODO:: Function | */ string): Query<T> {
         if (typeof filter === 'string') {
             if (this._preFilter !== filter) {
                 this._preFilter = filter;
@@ -148,46 +153,46 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         return this;
     }
 
-    preOrderBy(): Query {
+    preOrderBy(): Query<T> {
         // TODO::
         return this.applyChange();
     }
 
-    define(): Query {
+    define(): Query<T> {
         // TODO::
         return this.applyChange();
     }
 
-    select(...args: Array<any>): Query {
+    select(...args: any[]): Query<T> {
         this.applySelect(args[0]);
         return this.applyChange();
     }
 
-    from(datasource?: any): Query {
-        var hasTypeChanged: boolean;
+    from(dataSource?: any): Query<T> {
+        let hasTypeChanged: boolean;
 
-        if (datasource == null) {
-            hasTypeChanged = !(this.datasource instanceof Array);
-            this.datasource = [];
+        if (dataSource == null) {
+            hasTypeChanged = !(this.dataSource instanceof Array);
+            this.dataSource = [];
         }
-        else if (typeof datasource === 'object') {
-            hasTypeChanged = this.compareDatasourceType(datasource);
-            this.datasource = datasource;
+        else if (typeof dataSource === 'object') {
+            hasTypeChanged = this.compareDataSourceType(dataSource);
+            this.dataSource = dataSource;
         }
         else {
             this.logger.warning(MessageCodes.UNSUPPORTED_DATA_TYPE);
-            hasTypeChanged = !(this.datasource instanceof Array);
-            this.datasource = [];
+            hasTypeChanged = !(this.dataSource instanceof Array);
+            this.dataSource = [];
         }
 
         return this.applyChange(hasTypeChanged);
     }
 
-    distinct(apply?: boolean): Query {
+    distinct(apply?: boolean): Query<T> {
         return this.applyChange(this.applyDistinct(apply));
     }
 
-    groupBy(rawGrouping?: string | Array<string>): Query {
+    groupBy(rawGrouping?: string | string[]): Query<T> {
         if (this.applyList(rawGrouping, '_groupBy')) {
             return this.applyChange();
         }
@@ -196,38 +201,38 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         }
     }
 
-    totals(): Query {
+    totals(): Query<T> {
         // TODO::
         return this.applyChange();
     }
 
-    filter(rawFilter?: string): Query {
+    filter(rawFilter?: string): Query<T> {
         return this.applyChange(this.applyFilter(rawFilter));
     }
 
-    orderBy(rawSorting?: string | Array<string>): Query {
+    orderBy(rawSorting?: string | string[]): Query<T> {
         return this.applyChange(this.applyList(rawSorting, '_orderBy'));
     }
 
-    range(start: number, end?: number): Query {
+    range(start: number, end?: number): Query<T> {
         // TODO::
         return this.applyChange();
     }
 
-    clone(): Query {
-        var copy: Query = new Query();
+    clone(): Query<T> {
+        const copy: Query<T> = new Query();
         // TODO::
         return copy;
     }
 
-    toList(): Array<any> {
+    toList(): T {
         // TODO:: if type changes
         return this.execute();
     }
 
-    toObject(): Object {
+    toObject(): T {
         // TODO::
-        return {};
+        return <T>{};
     }
 
     toValue(): any {
@@ -235,20 +240,20 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         return null;
     }
 
-    execute(datasource?: any): any {
-        var workingData: any;
+    execute(dataSource?: any): T {
+        let workingData: any;
 
-        if (datasource instanceof Query) {
-            workingData = datasource.execute();
+        if (dataSource instanceof Query) {
+            workingData = dataSource.execute();
         }
-        else if (this.datasource instanceof Query) {
-            workingData = this.datasource.execute(datasource);
+        else if (this.dataSource instanceof Query) {
+            workingData = this.dataSource.execute(dataSource);
         }
         else {
-            workingData = datasource === undefined ?
-                this.datasource : datasource;
+            workingData = dataSource === undefined ?
+                this.dataSource : dataSource;
         }
-        
+
         if (typeof workingData === 'object' && workingData.then instanceof Function) {
             return workingData.then((result) => {
                 this.execute(result);
@@ -267,11 +272,11 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         return JSON.stringify(this);
     }
 
-    static fromDefinition(definition: string | Object): Query {
-        var defObj: BaseQuery<Query>;
+    static fromDefinition<T>(definition: string | Object): Query<T> {
+        let defObj: BaseQuery<Query<T>>;
 
         if (definition instanceof Object) {
-            defObj = <BaseQuery<Query>>definition;
+            defObj = <BaseQuery<Query<T>>>definition;
         }
         else if (typeof definition === 'string') {
             defObj = JSON.parse(definition);
@@ -286,8 +291,8 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             throw new Error();
         }
 
-        var query: Query = new Query();
-        
+        const query: Query<T> = new Query<T>();
+
         if (defObj._select) {
             query.select(defObj._select);
         }
@@ -305,7 +310,7 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
     // ============================================ PRIVATE METHODS ============================================
     // =========================================================================================================
 
-    protected encapsulate(): Query {
+    protected encapsulate(): Query<T> {
         Object.defineProperties(
             this,
             QUERY_PRIVATE_PROPERTIES
@@ -314,15 +319,15 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         return this;
     }
 
-    private applyChange(applied: boolean = true): Query {
+    private applyChange(applied: boolean = true): Query<T> {
         if (applied) {
             this.changed = true;
         }
         return this;
     }
 
-    private execPreFiltering(data: any): Array<any>|Object {
-        var preFilterObj = this.preFiltering;
+    private execPreFiltering(data: any): any[] | Object {
+        const preFilterObj = this.preFiltering;
         try {
             if (preFilterObj.isNew) {
                 preFilterObj.createFunction(this.logger);
@@ -335,17 +340,17 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         }
     }
 
-    private calculate(data: any): Array<any> {
+    private calculate(data: any): T {
         try {
             if (this.changed) {
                 // TODO:: error if no select has been defined!
                 this.init();
-                var mainGrouping: Grouping = this.parseGrouping(this._groupBy, null);
+                const mainGrouping: Grouping = this.parseGrouping(this._groupBy, null);
                 this.groupComposition = this.createGroupComposition(this, mainGrouping);
                 this.groupMap = this.getGroupMap(this.groupComposition, {});
                 this.groupingComposition = GroupingComposition.getComposition(this.allExpressions);
                 this.createFn();
-                
+
                 // use for both single regexp:
                 // TODO:: replace double new lines with single
                 // TODO:: bring back Quotes!
@@ -356,7 +361,7 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             this.logger.error(exc);
         }
 
-        return [];
+        return <any>[];
     }
 
     private init(): void {
@@ -372,10 +377,10 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
     }
 
     private createFn() {
-        var hasQueryGrouping: boolean = this.hasQueryGrouping();
-        var aggregationIterators: string = this.defineAggregationIterators();
-        var groupedResultSet: string = this.defineGroupedResultSet(this.groupingComposition, 1, true);
-        var resultSet: string;
+        const hasQueryGrouping: boolean = this.hasQueryGrouping();
+        const aggregationIterators: string = this.defineAggregationIterators();
+        const groupedResultSet: string = this.defineGroupedResultSet(this.groupingComposition, 1, true);
+        let resultSet: string;
 
         if (!hasQueryGrouping) {
             if (this.hasAnySubGroup() || this.hasAnyPrimalAggregationNonOver()) {
@@ -386,7 +391,7 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             }
         }
 
-        this.code = QueryFormatter.formatFunction(
+        this.code = QueryFormatter.defineFunction(
             this.defineAllDeclaration(),
             aggregationIterators,
             this.defineNonGroupedPostProcessing(),
@@ -403,18 +408,18 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             this.logExpressions();
             this.logger.debug(this.code);
         }
-        
+
         this.bindFn();
     }
 
     private bindFn(): void {
-        var params: Array<string> = Object.keys(this.context);
+        const params: string[] = Object.keys(this.context);
         params.push('data', this.code);
-        
-        var args: Array<any> = [];
+
+        const args: any[] = [];
         utils.forEach(this.context, (arg) => args.push(arg));
 
-        var fn = Function.apply(null, params);
+        const fn = Function.apply(null, params);
         this.fn = Function.prototype.bind.apply(fn, [fn].concat(args));
     }
 
@@ -423,11 +428,11 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
     }
 
     private hasAnyPrimalAggregationNonOver(): boolean {
-        return utils.some<Expression>(this.allExpressions, exp => exp instanceof Aggregate && exp.isPrimalNonOver());
+        return utils.some<Expression>(this.allExpressions, (exp) => exp instanceof Aggregate && exp.isPrimalNonOver());
     }
 
     private hasAnySubGroup(): boolean {
-        return utils.keysLength(this.groupComposition.innerGroups) ? true : false;
+        return !!(utils.keysLength(this.groupComposition.innerGroups));
     }
 
     private hasAnyGroupDistinct(groupComposition: GroupComposition = this.groupComposition): boolean {
@@ -438,24 +443,20 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
     }
 
     private defineAllDeclaration(): string {
-        return QueryFormatter.getAllDeclarationsDefinition(
+        return QueryFormatter.defineAllDeclarations(
             this.defineMainGroupingDeclaration(),
             this.defineAllVariableDeclarations()
         );
     }
 
     private defineMainGroupingDeclaration(): string {
-        return this.defineGrouping(this.groupingComposition, this.groupMap['']);
-    }
-
-    private isAnyUsingIndex(expressions: Array<Expression>) {
-        return utils.some<Expression>(expressions, (exp) => exp.hasIndex);
+        return GroupingComposition.defineGrouping(this.groupingComposition, this.groupMap['']);
     }
 
     private defineAllVariableDeclarations(): string {
-        var groupings: Grouping = <Grouping>this.allExpressions.filter((exp) => exp.isGroupingExpression());
+        const groupings: Grouping = <Grouping>this.allExpressions.filter((exp) => exp.isGroupingExpression());
 
-        var declarations = groupings.reduce((acc, exp) => {
+        let declarations = groupings.reduce((acc, exp) => {
             acc.push(exp.id);
             acc.push(exp.valueId);
             return acc;
@@ -467,51 +468,51 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
 
         declarations = declarations.concat(
             this.groupComposition.getGroupVariableDeclarations()
-        )
+        );
 
         return declarations.join(', ') + (declarations.length ? ',' : '');
     }
 
     private defineAggregationIterators(): string {
-        var expsByLevel: Array<Array<Aggregate>> = this.getExpAggregationsByLevels().reverse();
-        var maxLevel: number = expsByLevel.length || 1;
-        var iterators: Array<string> = [];
+        const expsByLevel: Aggregate[][] = this.getExpAggregationsByLevels().reverse();
+        const maxLevel: number = expsByLevel.length || 1;
+        const iterators: string[] = [];
 
-        for (var level = 0; level < maxLevel; level++) {
-            var isLastIteration: boolean = (level + 1) === maxLevel;
-            var currentLevelAggregations: Array<Aggregate> = expsByLevel[level];
-            var groupingCompByLvl: GroupingComposition = isLastIteration ?
+        for (let level = 0; level < maxLevel; level++) {
+            const isLastIteration: boolean = (level + 1) === maxLevel;
+            const currentLevelAggregations: Aggregate[] = expsByLevel[level];
+            const groupingCompByLvl: GroupingComposition = isLastIteration ?
                 this.groupingComposition :
                 GroupingComposition.getComposition(currentLevelAggregations);
-            var isUsingIndex: boolean = this.isAnyUsingIndex(currentLevelAggregations);
-            var ungroupsDef: string = isLastIteration ? this.defineUngroups() : '';
-            var groupingsDef: string = this.defineGroupings('', [], this.groupingComposition, groupingCompByLvl, isLastIteration);
-            var aggregationDef: string = this.defineExpAggregations(currentLevelAggregations);
+            const isUsingIndex: boolean = Expression.isAnyUsingIndex(currentLevelAggregations);
+            const ungroupsDef: string = isLastIteration ? this.defineUngroups() : '';
+            const groupingsDef: string = groupingCompByLvl.defineGroupings(this.groupMap, this.groupingComposition, isLastIteration);
+            const aggregationDef: string = Query.defineExpAggregations(currentLevelAggregations);
 
             if (groupingsDef || ungroupsDef || aggregationDef) {
-                var postProcessing: string = isLastIteration ?
+                const postProcessing: string = isLastIteration ?
                     '' :
                     this.defineGroupsPostProcessing(maxLevel - level);
 
                 iterators.push(
-                    QueryFormatter.formatAggregationIterator(
+                    QueryFormatter.defineAggregationIterator(
                         groupingsDef,
                         ungroupsDef,
                         aggregationDef,
                         postProcessing,
                         isUsingIndex
-                    )
+                    ),
                 );
             }
         }
-        
+
         return iterators.join('\n\n');
     }
 
-    private getExpAggregationsByLevels(): Array<Array<Aggregate>> {
-        return utils.reduce<Expression, Array<Array<Aggregate>>>(this.allExpressions, (acc, exp) => {
+    private getExpAggregationsByLevels(): Aggregate[][] {
+        return utils.reduce<Expression, Aggregate[][]>(this.allExpressions, (acc, exp) => {
             if (exp instanceof Aggregate) {
-                var currLevelExps = acc[exp.level - 1];
+                let currLevelExps = acc[exp.level - 1];
                 if (!currLevelExps) {
                     currLevelExps = acc[exp.level - 1] = [];
                 }
@@ -528,8 +529,8 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         ).join('\n');
     }
 
-    private getUngroups(groupComposition: GroupComposition): Array<GroupComposition> {
-        return utils.reduce<GroupComposition, Array<GroupComposition>>(groupComposition.innerGroups, (acc, innerGroupComp) => {
+    private getUngroups(groupComposition: GroupComposition): GroupComposition[] {
+        return utils.reduce<GroupComposition, GroupComposition[]>(groupComposition.innerGroups, (acc, innerGroupComp) => {
             acc = acc.concat(
                 this.getUngroups(innerGroupComp)
             );
@@ -540,117 +541,12 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         }, []);
     }
 
-    private defineGroupings(
-        groupingIds: string,
-        definedGroupings: Array<string>,
-        baseGroupings: GroupingComposition,
-        currentGroupings: GroupingComposition,
-        isLastIteration: boolean
-    ): string {
-        return utils.map(currentGroupings.inner, (groupingComp: GroupingComposition, groupingId: string) => {
-            var baseGrouping: GroupingComposition = baseGroupings.inner[groupingId];
-            var currentGroupingIds: string = groupingIds + groupingId;
-            var parentGrouping = (baseGroupings.groupingExpression ? currentGroupings.id : '__groupings__') +
-                    (baseGroupings.isComplex() ? '.' + groupingId : '');
-            var definition: string;
-
-            if (!baseGrouping.hasBeenDefined) {
-                var currentGroupMaps = this.groupMap[currentGroupingIds];
-                
-                definition = utils.format(Query.GROUPING_DECLARATION_TEMPLATE,
-                    groupingComp.id,
-                    groupingComp.groupingExpression.valueId,
-                    groupingComp.groupingExpression.code,
-                    parentGrouping,
-                    this.defineGrouping(baseGrouping, currentGroupMaps),
-                    this.defineGroupIndexIncrementation(groupingComp),
-                    this.defineGroupRowAssignment(groupingComp)
-                );
-
-                baseGrouping.hasBeenDefined = true;
-                definedGroupings.push(groupingComp.id);
-            }
-            else if (definedGroupings.indexOf(groupingComp.id) == -1) {
-                definition = utils.format(Query.GROUPING_FETCH,
-                    groupingComp.id,
-                    groupingComp.groupingExpression.code,
-                    parentGrouping
-                );
-
-                definedGroupings.push(groupingComp.id);
-            }
-
-            return (definition || '') + '\n' + this.defineGroupings(currentGroupingIds, definedGroupings, baseGrouping, groupingComp, isLastIteration);
-        }).join('');
-    }
-    private static GROUPING_DECLARATION_TEMPLATE: string =
-`    {1} = {2};
-    if ({3}.hasOwnProperty({1})) {
-        {0} = {3}[{1}];{5}{6}
-    }
-    else {
-        {0} = {3}[{1}] = {4};
-    }`;
-    private static GROUPING_FETCH: string = `    {0} = {2}[{1}];`;
-
-    private static OBJECT_COMPOSITION: string = `{ {0} }`;
-    private defineGrouping(baseGrouping: GroupingComposition, groupCompositions: Array<GroupComposition>): string {
-        var definition: string;
-        var props: Array<string> = [];
-
-        // Adds declarattion of inner groups
-        utils.forEach<GroupingComposition>(baseGrouping.inner,
-            (gComp) => props.push(gComp.groupingExpression.id + ': {}')
-        );
-        // Adds declaration of group expressions
-        utils.forEach<Aggregate>(baseGrouping.getAggregations(), (exp) => {
-            props.push(exp.defineInitialProperty());
-            if (exp.hasDistinct) {
-                props.push(exp.distinctProperty());
-            }
-        });
-        
-        if (baseGrouping.hasNonAggregatedGroupedFields()) {
-            props.push('row: row');
-        }
-
-        if (baseGrouping.hasFieldsWithGroupIndex()) {
-            props.push('groupIndex: 1');
-        }
-
-        utils.forEach<GroupComposition>(groupCompositions, (groupComp: GroupComposition) => {
-            if (groupComp.isUngroup) {
-                props.push(groupComp.id + ': []');
-            }
-        });
-
-        definition = props.join(', ');
-
-        return utils.format(Query.OBJECT_COMPOSITION, definition);
-    }
-
-    private defineGroupRowAssignment(groupingComp: GroupingComposition): string {
-        return groupingComp.hasNonAggregatedGroupedFields() ?
-            '\n        ' + groupingComp.id + '.row = row;' : '';
-    }
-
-    private defineGroupIndexIncrementation(groupingComp: GroupingComposition): string {
-        return groupingComp.hasFieldsWithGroupIndex() ?
-            '\n        ' + groupingComp.id + '.groupIndex++;' : '';
-    }
-
-    private defineExpAggregations(expressions: Array<Aggregate>): string {
-        return utils.map<Aggregate, string>(expressions, (exp: Aggregate) => 
-            exp.defineAggregation()
-        ).join('\n');
-    }
-
     private defineGroupsPostProcessing(postProcessingLvl: number): string {
-        var expForPostProcessing: Array<Aggregate> = <Array<Aggregate>>this.allExpressions.filter(
-            (exp) => exp.level === postProcessingLvl && exp instanceof Aggregate && exp.isPostProcessingType()
+        const expForPostProcessing: Aggregate[] = <Aggregate[]>this.allExpressions.filter(
+                (exp) => exp.level === postProcessingLvl && exp instanceof Aggregate && exp.isPostProcessingType()
             );
         if (expForPostProcessing.length) {
-            var currentLvlGroupingComp = GroupingComposition.getComposition(expForPostProcessing);
+            const currentLvlGroupingComp = GroupingComposition.getComposition(expForPostProcessing);
             return this.defineGroupedResultSet(currentLvlGroupingComp, postProcessingLvl, false);
         }
         else {
@@ -658,30 +554,30 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         }
     }
 
-    private createGroupComposition(group: BaseQuery<Query | Group | Ungroup>, grouping: Grouping = [], parentGrouping: Grouping = null): GroupComposition {
-        var groupId: string = (<Query>group).id;
-        var select: any = group._select;
-        var isMain: boolean = parentGrouping === null;
-        var isUngroup: boolean = (group instanceof Ungroup);
-        var hasParentGrouping: boolean = parentGrouping && parentGrouping.length ? true : false;
-        var sorting: Sorting = this.parseSorting(group._orderBy);
-        var filter: Expression = this.parseFilter(group._filter);
-        var groupComposition: GroupComposition = new GroupComposition(groupId, group._distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping);
+    private createGroupComposition(group: BaseQuery<Query<T> | Group | Ungroup>, grouping: Grouping = [], parentGrouping: Grouping = null): GroupComposition {
+        const groupId: string = group.id;
+        const select: any = group._select;
+        const isMain: boolean = parentGrouping === null;
+        const isUngroup: boolean = (group instanceof Ungroup);
+        const hasParentGrouping: boolean = !!(parentGrouping && parentGrouping.length);
+        const sorting: Sorting = this.parseSorting(group._orderBy);
+        const filter: Expression = this.parseFilter(group._filter);
+        const groupComposition: GroupComposition = new GroupComposition(groupId, group._distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping);
         groupComposition.selection = this.parseSelection(select, groupComposition);
-        groupComposition.expressions = this.allExpressions.filter((exp: Expression) => exp.groupIds.indexOf((<Query>group).id) > -1);
+        groupComposition.expressions = this.allExpressions.filter((exp: Expression) => exp.groupIds.indexOf(group.id) > -1);
         return groupComposition;
     }
 
     private parseSelection(selection: any, groupComposition: GroupComposition): Selector {
-        var selector = new Selector();
-        var grouping: Grouping;
+        const selector = new Selector();
+        let grouping: Grouping;
 
         if (typeof selection === 'object' && selection !== null) {
             if (selection instanceof Ungroup) {
                 if (groupComposition.isUngroup) {
                     selection = this.handleMeaninglessSelection(MessageCodes.UNGROUP_WITHIN_UNGROUP, selection);
                 }
-                 
+
                 grouping = groupComposition.grouping;
             }
             else if (selection instanceof Group) {
@@ -705,9 +601,9 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
                     }
                 }
             }
-            
+
             if (selection instanceof Group || selection instanceof Ungroup) {
-                var innerGroup: GroupComposition = this.createGroupComposition(selection, grouping, groupComposition.grouping);
+                const innerGroup: GroupComposition = this.createGroupComposition(selection, grouping, groupComposition.grouping);
                 groupComposition.innerGroups.push(innerGroup);
                 selector.subSelectors = innerGroup.isUngroup ?
                     innerGroup.getUngroupReference() :
@@ -730,7 +626,7 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             selector.isLeaf = false;
         }
         else {
-            var startingLevel = groupComposition.isUngroup ? 1 : 0;
+            const startingLevel = groupComposition.isUngroup ? 1 : 0;
             selector.subSelectors = new Field(
                 this.logger,
                 selection,
@@ -746,16 +642,16 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
         return selector;
     }
 
-    private handleMeaninglessSelection(msgCode: number, selection: BaseGroup<Group | Ungroup>): Array<any> {
+    private handleMeaninglessSelection(msgCode: number, selection: BaseGroup<Group | Ungroup>): any[] {
         this.logger.log(msgCode, selection._select);
         return [selection._select];
     }
 
-    private parseGrouping(rawGrouping: Array<string>, parentGrouping: Grouping): Grouping {
+    private parseGrouping(rawGrouping: string[], parentGrouping: Grouping): Grouping {
         return utils.reduce<string, Grouping>(
             rawGrouping,
             (accGrouping, groupBy) => {
-                var groupExp: GroupBy = new GroupBy(
+                const groupExp: GroupBy = new GroupBy(
                     groupBy,
                     this.quotes,
                     this.allExpressions,
@@ -771,7 +667,7 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             []);
     }
 
-    private parseSorting(rawSorting: Array<string>): Sorting {
+    private parseSorting(rawSorting: string[]): Sorting {
         return utils.map<string, OrderBy>(
             rawSorting,
             (rawOrderBy) =>
@@ -786,19 +682,12 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
     private parseFilter(filter: string): Expression {
         return filter ?
             new Expression(ExpressionType.FILTER, filter, this.quotes) :
-            null
-    }
-
-    private findGroupingComposition(groupingComposition: GroupingComposition, groupingId: string) {
-        if (groupingComposition.id === groupingId) {
-            return groupingComposition;
-        }
-        return utils.returnFound<GroupingComposition>(groupingComposition.inner, (inner) => this.findGroupingComposition(inner, groupingId))
+            null;
     }
 
     private addFunction(fn: Function): boolean {
-        var hasChangedContext: boolean;
-        var fnName: string = fn['name'];
+        const fnName: string = fn['name']; // tslint:disable-line:no-string-literal
+        let hasChangedContext: boolean;
 
         if (!fnName || fnName === 'anonymous') {
             this.logger.warning(MessageCodes.ANONYMOUS_FN_IN_CONTEXT, fn);
@@ -808,12 +697,12 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
             hasChangedContext = this.context.hasOwnProperty(fnName);
             this.context[fnName] = fn;
         }
-        
+
         return hasChangedContext;
     }
 
-    private getGroupMap(groupComposition: GroupComposition, accumulator: GroupMap): GroupMap {
-        var currGroupingIds: string = groupComposition.grouping.map((exp) => exp.id).join('');
+    private getGroupMap(groupComposition: GroupComposition, accumulator: IGroupMap): IGroupMap {
+        const currGroupingIds: string = groupComposition.grouping.map((exp) => exp.id).join('');
         if (!accumulator[currGroupingIds]) {
             accumulator[currGroupingIds] = [];
         }
@@ -834,60 +723,57 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
     }
 
     private definePlainResultSet(): string {
-        var groupingsDefinition: string = this.defineGroupings(
-            '',
-            [],
-            this.groupingComposition,
-            this.groupingComposition,
-            true
+        const groupingsDefinition: string = this.groupingComposition.defineGroupings(
+            this.groupMap,
+            this.groupingComposition
         );
 
-        var nonGroupedFields = this.allExpressions.filter((exp) => !exp.parentGroupingId && exp instanceof Field);
+        const nonGroupedFields = this.allExpressions.filter((exp) => !exp.parentGroupingId && exp instanceof Field);
 
-        return QueryFormatter.formatAggregationIterator(
+        return QueryFormatter.defineAggregationIterator(
             groupingsDefinition,
             '',
             this.defineResultSet(),
             '',
-            this.isAnyUsingIndex(nonGroupedFields)
+            Expression.isAnyUsingIndex(nonGroupedFields)
         );
     }
 
-    private static GROUPING_VAR_DECLARATION = '    {0} = {1}[{2}];';
     private defineGroupedResultSet(
         parentGroupingComposition: GroupingComposition,
         postProcessingLvl: number,
         shouldFillResults: boolean,
         groupingIds: string = ''
     ): string {
-        var isParentComplex = parentGroupingComposition.isComplex();
-        
+        const isParentComplex = parentGroupingComposition.isComplex();
+
         return utils.reverseMap(parentGroupingComposition.inner, (groupingComp: GroupingComposition) => {
-            var iteratorName: string = groupingComp.groupingExpression.iteratorId;
-            var groupingId: string = groupingComp.id;
-            var currentGroupingIds = groupingIds + groupingId;
-            var currentGroupCompositions: Array<GroupComposition> = this.groupMap[currentGroupingIds];
-            var groupingDeclarations: Array<string> = groupingComp.getGroupingDeclarations(
+            const iteratorName: string = groupingComp.groupingExpression.iteratorId;
+            const groupingId: string = groupingComp.id;
+            const currentGroupingIds = groupingIds + groupingId;
+            const currentGroupCompositions: GroupComposition[] = this.groupMap[currentGroupingIds];
+            const groupingDeclarations: string[] = groupingComp.getGroupingDeclarations(
                 isParentComplex,
                 parentGroupingComposition.id
             );
-            var innerGroupReference: string = groupingDeclarations[0];
-            var innerGroupDeclaration: string = groupingDeclarations[1];
+            const innerGroupReference: string = groupingDeclarations[0] || '';
+            const innerGroupDeclaration: string = groupingDeclarations[1];
 
-            var groupingsDeclaration: string = utils.format(Query.GROUPING_VAR_DECLARATION,
-                groupingId,
-                innerGroupReference || '',
-                iteratorName
-            );
-
-            var innerLoops: string = this.defineGroupedResultSet(
+            const innerLoops: string = this.defineGroupedResultSet(
                 groupingComp,
                 postProcessingLvl,
                 shouldFillResults,
                 currentGroupingIds
             );
 
-            var fillingResults: string;
+            let groupingsDeclaration: string = QueryFormatter.defineGrouping(
+                groupingId,
+                innerGroupReference,
+                iteratorName
+            );
+
+            let fillingResults: string;
+
             if (shouldFillResults && currentGroupCompositions) {
                 fillingResults = '';
 
@@ -897,20 +783,20 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
                     }
                     fillingResults += '\n';
 
-                    var subSelectionCotainersDeclaration: string = utils.map(currentGroupComp.getSubGroups(), (innerGroup: GroupComposition) =>
+                    const subSelectionCotainersDeclaration: string = utils.map(currentGroupComp.getSubGroups(), (innerGroup: GroupComposition) =>
                         innerGroup.getInitVariable() + ';'
                     ).join('\n');
-    
+
                     groupingsDeclaration += '\n' + subSelectionCotainersDeclaration;
                 });
             }
 
-            var postProcessing: string = this.defineExpressionsPostProcessing(groupingComp.expressions, postProcessingLvl);
+            const postProcessing: string = this.defineExpressionsPostProcessing(groupingComp.expressions, postProcessingLvl);
 
             if (postProcessing || innerLoops || fillingResults) {
-                return QueryFormatter.formatGroupedResultSet(
+                return QueryFormatter.defineGroupedResultSet(
                     innerGroupDeclaration,
-                    innerGroupReference || '',
+                    innerGroupReference,
                     iteratorName,
                     groupingsDeclaration,
                     postProcessing,
@@ -918,77 +804,41 @@ export class Query extends BaseQuery<Query> implements IQuery<any> {
                     fillingResults
                 );
             }
-            else
-                return '';
-            
+
+            return '';
         }).join('\n');
     }
 
-    private static RESULTS_PUSH_TEMPLATE = '{0}.push({1});';
-    private static RESULTS_PREPROCESSED_PUSH_TEMPLATE =
-`out = {1};
-if ({2})
-    {0}.push({1});`;
     private defineResultSet(groupComposition: GroupComposition = this.groupComposition): string {
-        var containerReference: string = groupComposition.isMain ?
+        const containerReference: string = groupComposition.isMain ?
             '__results__' :
             (groupComposition.isUngroup ? groupComposition.getUngroupReference() : groupComposition.id);
-        var preProcessing: Array<string> = [];
-        
+        const preProcessing: string[] = [];
+
         if (groupComposition.filter) {
             preProcessing.push('(' + groupComposition.filter.code + ')');
         }
 
         if (groupComposition.distinct) {
-            preProcessing.push(utils.format(
-                '!{0}({1}, out)',
-                QueryFormatter.DISTINCT_FN_NAME,
-                containerReference
-                ));
+            preProcessing.push(QueryFormatter.defineDistinctPreProcessing(containerReference));
         }
 
         if (preProcessing.length) {
-            return utils.format(Query.RESULTS_PREPROCESSED_PUSH_TEMPLATE,
+            return QueryFormatter.definePreProcessedPushTemplate(
                 containerReference,
-                this.defineSelection(groupComposition.selection),
-                preProcessing.join(' && ')
+                Query.defineSelection(groupComposition.selection),
+                preProcessing
             );
         }
         else {
-            return utils.format(Query.RESULTS_PUSH_TEMPLATE,
+            return QueryFormatter.defineResultsPushTemplate(
                 containerReference,
-                this.defineSelection(groupComposition.selection)
+                Query.defineSelection(groupComposition.selection)
             );
         }
     }
 
-    private static PROPEERTY_DEFINITION: string = '"{0}": {1}';
-    private defineSelection(selector: Selector): string {
-        var subSelectors = selector.subSelectors;
-
-        if (subSelectors instanceof Expression) {
-            return (<Expression>subSelectors).code;
-        }
-        else if (typeof subSelectors === 'string') {
-            return subSelectors;
-        }
-        else if (subSelectors instanceof Array) {
-            var expProps: string = utils.map<Selector, string>(subSelectors, (subSelector) =>
-                this.defineSelection(subSelector)
-            ).join(', ');
-
-            return utils.format('[ {0} ]', expProps);
-        }
-        else {
-            var expProps: string = utils.map<Selector, string>(subSelectors, (subSelector, groupId: string) =>
-                utils.format(Query.PROPEERTY_DEFINITION, groupId, this.defineSelection(subSelector))
-            ).join(', ');
-
-            return utils.format('{ {0} }', expProps);
-        }
-    }
-
-    private defineExpressionsPostProcessing(expressions: Array<Expression>, processingLvl: number): string {
+    private defineExpressionsPostProcessing(expressions: Expression[], processingLvl: number): string {
         return utils.reduce<Expression, string>(expressions, (acc, exp) => {
             if (processingLvl === exp.level && exp instanceof Aggregate) {
                 acc += exp.definePostProcessing();
@@ -998,19 +848,19 @@ if ({2})
     }
 
     private defineComparators(): string {
-        return utils.reduce<Expression, Array<string>>(this.allExpressions, (comparators, exp) => {
+        return utils.reduce<Expression, string[]>(this.allExpressions, (comparators, exp) => {
             if (exp instanceof Aggregate) {
-                var comparatorDef: string = exp.defineSortingComparator();
+                const comparatorDef: string = exp.defineSortingComparator();
                 if (comparatorDef) {
                     comparators.push(comparatorDef);
                 }
             }
             return comparators;
         }, []).concat(
-            utils.reduce<Array<GroupComposition>, Array<string>>(this.groupMap, (comparators, groups) => {
+            utils.reduce<GroupComposition[], string[]>(this.groupMap, (comparators, groups) => {
                 utils.forEach(groups, (group: GroupComposition) => {
                     if (group.hasSorting()) {
-                        comparators.push(this.defineGroupComparator(group));
+                        comparators.push(OrderBy.defineGroupComparator(group));
                     }
                 });
                 return comparators;
@@ -1018,20 +868,10 @@ if ({2})
         ).join('\n');
     }
 
-    private defineGroupComparator(group: GroupComposition): string {
-        return utils.format(
-`function {0}(out, __outB__) {
-{1}
-}`,
-            utils.addIdSuffix(group.id, 'Comparator'),
-            OrderBy.defineComparator(group.sorting)
-        );
-    }
-
-    private compareDatasourceType(datasource: any): boolean {
-        return this.datasource instanceof Array ?
-            (datasource instanceof Array) :
-            !(datasource instanceof Array);
+    private compareDataSourceType(dataSource: any): boolean {
+        return this.dataSource instanceof Array ?
+            (dataSource instanceof Array) :
+            !(dataSource instanceof Array);
     }
 
     private logExpressions(): void {
@@ -1039,24 +879,53 @@ if ({2})
             this.logger.debugObject('Expression', exp)
         );
     }
+
+    private static defineExpAggregations(expressions: Aggregate[]): string {
+        return utils.map<Aggregate, string>(expressions, (exp: Aggregate) =>
+            exp.defineAggregation()
+        ).join('\n');
+    }
+
+    private static defineSelection(selector: Selector): string {
+        const subSelectors = selector.subSelectors;
+
+        if (subSelectors instanceof Expression) {
+            return (<Expression>subSelectors).code;
+        }
+        else if (typeof subSelectors === 'string') {
+            return subSelectors;
+        }
+        else if (subSelectors instanceof Array) {
+            const expProps: string = utils.map<Selector, string>(subSelectors, (subSelector) =>
+                Query.defineSelection(subSelector)
+            ).join(', ');
+
+            return `[ ${expProps} ]`;
+        }
+        else { // default type is object
+            const expProps: string = utils.map<Selector, string>(subSelectors, (subSelector, groupId: string) =>
+                QueryFormatter.defineProperty(groupId, Query.defineSelection(subSelector))
+            ).join(', ');
+
+            return `{ ${expProps} }`;
+        }
+    }
 }
 
-type GroupMap = { string?: Array<GroupComposition> }
-
-var PRIVATE_PROP_FLAGS = { enumerable: false, writable: true };
-var QUERY_PRIVATE_PROPERTIES = {
-    datasource: PRIVATE_PROP_FLAGS,
-    changed: PRIVATE_PROP_FLAGS,
-    logger: PRIVATE_PROP_FLAGS,
+const PRIVATE_PROP_FLAGS = { enumerable: false, writable: true };
+const QUERY_PRIVATE_PROPERTIES = {
     allExpressions: PRIVATE_PROP_FLAGS,
+    changed: PRIVATE_PROP_FLAGS,
+    code: PRIVATE_PROP_FLAGS,
     context: PRIVATE_PROP_FLAGS,
+    datasource: PRIVATE_PROP_FLAGS,
     debugLevel: PRIVATE_PROP_FLAGS,
     fn: PRIVATE_PROP_FLAGS,
     groupComposition: PRIVATE_PROP_FLAGS,
     groupMap: PRIVATE_PROP_FLAGS,
     groupingComposition: PRIVATE_PROP_FLAGS,
-    quotes: PRIVATE_PROP_FLAGS,
-    code: PRIVATE_PROP_FLAGS,
-    preFiltering: PRIVATE_PROP_FLAGS
+    logger: PRIVATE_PROP_FLAGS,
+    preFiltering: PRIVATE_PROP_FLAGS,
+    quotes: PRIVATE_PROP_FLAGS
 // TODO::
 };

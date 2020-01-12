@@ -1,5 +1,4 @@
 
-
 export enum ExpressionType {
     FIELD = 'FIELD',
     AGGREGATE = 'AGGREGATE',

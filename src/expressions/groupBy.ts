@@ -1,18 +1,16 @@
-import * as utils from "../common/utils";
-import { Expression, Quotes } from './expression';
+import * as utils from '../common/utils';
 import { ExpressionType } from '../constants/expressionType';
-
+import { Expression, IQuotes } from './expression';
 
 export class GroupBy extends Expression {
-    
-    public iteratorId: string;
-    public valueId: string;
-    public isOverType: boolean;
-    
+
+    iteratorId: string;
+    valueId: string;
+
     constructor(
         rawExpression: any,
-        queryQuotes: Quotes,
-        queryExpressions: Array<Expression> = null,
+        queryQuotes: IQuotes,
+        queryExpressions: Expression[] = null,
         parentGroupingId: string = null
     ) {
         super(ExpressionType.GROUP_BY, rawExpression, queryQuotes, parentGroupingId);
@@ -24,28 +22,28 @@ export class GroupBy extends Expression {
 
         this.normalize();
 
-        var sibling: GroupBy;
-        if (sibling = this.findSibling(queryExpressions)) {
+        const sibling: GroupBy = this.findSibling(queryExpressions);
+        if (sibling) {
             return sibling;
         }
 
         this.setIds();
         this.validate();
-        // this.handleIndexes(); TODO:: Expression should have this
+        // this.checkForIndexes(); // TODO:: in expression
         if (queryExpressions) {
             queryExpressions.push(this);
         }
     }
 
-    public equal(groupBy: GroupBy) {
+    equal(groupBy: GroupBy) {
         return this.id === groupBy.id;
     }
 
-    public isOverallGrouping(): boolean {
+    isOverallGrouping(): boolean {
         return this.code === GROUP_BY_ALL;
     }
-    
-    public static getLastGroupingId(parentGrouping: Grouping, currentGrouping?: Grouping): string {
+
+    static getLastGroupingId(parentGrouping: Grouping, currentGrouping?: Grouping): string {
         if (currentGrouping && currentGrouping.length) {
             return currentGrouping[currentGrouping.length - 1].id;
         }
@@ -55,21 +53,21 @@ export class GroupBy extends Expression {
         return null;
     }
 
-    public static compareGrouping(groupingA: Grouping, groupingB: Grouping): boolean {
-        return groupingA.length == groupingB.length &&
+    static compareGrouping(groupingA: Grouping, groupingB: Grouping): boolean {
+        return groupingA.length === groupingB.length &&
             !utils.find<Expression>(groupingA, (expA, index) => {
                 return !expA.equals(groupingB[index]);
             });
     }
 
-    public static defineGroupingReference(grouping: Grouping, groupigScope: Grouping): string {
+    static defineGroupingReference(grouping: Grouping, groupigScope: Grouping): string {
         return utils.reduce(grouping, (refDef, groupBy: GroupBy, index) => {
-            var groupByMatch = utils.find<GroupBy>(groupigScope, (groupByRef) => groupByRef.equals(groupBy));
-            return refDef + '' + (parseInt(index) ? '' : (groupBy.parentGroupingId || '__groupings__')) + '.' + groupBy.id + '[' + groupByMatch.iteratorId + ']'
+            const groupByMatch = utils.find<GroupBy>(groupigScope, (groupByRef) => groupByRef.equals(groupBy));
+            return refDef + '' + (parseInt(index) ? '' : (groupBy.parentGroupingId || '__groupings__')) + '.' + groupBy.id + '[' + groupByMatch.iteratorId + ']';
         }, '');
     }
 
-    public static isOverall(exp: Expression): boolean {
+    static isOverall(exp: Expression): boolean {
         return !exp.code || exp.code === 'ALL' || exp.code === 'true' || exp.code === '*';
     }
 
@@ -88,13 +86,13 @@ export class GroupBy extends Expression {
         this.valueId = utils.addIdSuffix(this.id, 'Val');
     }
 
-    private findSibling(queryExpressions: Array<Expression>): GroupBy {
-        return utils.find<GroupBy>(queryExpressions, (exp) => 
+    private findSibling(queryExpressions: Expression[]): GroupBy {
+        return utils.find<GroupBy>(queryExpressions, (exp) =>
             this.parentGroupingId === exp.parentGroupingId && this.equals(exp)
         );
     }
 }
 
-export type Grouping = Array<GroupBy>;
+export type Grouping = GroupBy[];
 
 const GROUP_BY_ALL = 'ALL';

@@ -54,7 +54,7 @@
             this._argument = argExpression;
         }
         AggregateFunction.prototype.distinct = function (apply) {
-            this._distinct = apply ? true : false;
+            this._distinct = !!(apply);
             return this;
         };
         AggregateFunction.prototype.over = function (grouping) {
@@ -66,27 +66,34 @@
             return this;
         };
         AggregateFunction.prototype.toString = function () {
-            return utils.format(AggregateFunction.FUNCTION_TEMPLATE, this.type.toString(), this._argument ? this._rawExpression + ', ' + this._argument : this._rawExpression, this.defineOver(), this.defineOrderBy(), this._distinct ? 'DISTINCT' : '');
+            var fnType = this.type.toString();
+            var fnExpression = this._argument ? this._rawExpression + ', ' + this._argument : this._rawExpression;
+            var overArgs = this.defineOver();
+            var orderByArgs = this.defineOrderBy();
+            var distinct = this._distinct ? 'DISTINCT' : '';
+            return fnType + "(" + distinct + " " + fnExpression + ")" + overArgs + orderByArgs;
         };
         AggregateFunction.prototype.valueOf = function () {
             return this.toString();
+        };
+        AggregateFunction.prototype.defineOver = function () {
+            if (this._over) {
+                var overArgs = this._over.join(', ');
+                return "OVER(" + overArgs + ")";
+            }
+            return '';
+        };
+        AggregateFunction.prototype.defineOrderBy = function () {
+            if (this._orderBy) {
+                var orderByArgs = this._orderBy.join(', ');
+                return "ORDER_BY(" + orderByArgs + ")";
+            }
+            return '';
         };
         AggregateFunction.getList = function (list) {
             return list instanceof Array ? list :
                 (typeof list === 'string' ? [list] : null);
         };
-        AggregateFunction.prototype.defineOver = function () {
-            return this._over ?
-                utils.format(AggregateFunction.DIRECTIVE_TEMPLATE, 'OVER', this._over.join(', ')) :
-                '';
-        };
-        AggregateFunction.prototype.defineOrderBy = function () {
-            return this._orderBy ?
-                utils.format(AggregateFunction.DIRECTIVE_TEMPLATE, 'ORDER_BY', this._orderBy.join(', ')) :
-                '';
-        };
-        AggregateFunction.FUNCTION_TEMPLATE = '{0}({4} {1}){2}{3}';
-        AggregateFunction.DIRECTIVE_TEMPLATE = '{0}({1})';
         return AggregateFunction;
     }());
     exports.AggregateFunction = AggregateFunction;

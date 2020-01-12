@@ -4,13 +4,13 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "../common/logger"], factory);
+        define(["require", "exports", "../common/logger", "../common/utils"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var utils = require("../common/utils");
     var logger_1 = require("../common/logger");
+    var utils = require("../common/utils");
     var GroupComposition = /** @class */ (function () {
         function GroupComposition(groupId, distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping) {
             if (isMain === void 0) { isMain = false; }
@@ -38,7 +38,6 @@
                     break;
                 default: initValue = 'null';
             }
-            ;
             return this.id + " = " + initValue;
         };
         GroupComposition.prototype.getGroupVariableDeclarations = function () {
@@ -92,15 +91,6 @@
         return GroupComposition;
     }());
     exports.GroupComposition = GroupComposition;
-    var Selector = /** @class */ (function () {
-        function Selector() {
-            this.isLeaf = true;
-            this.ungroupLabelDef = null;
-            this.subSelectors = null;
-        }
-        return Selector;
-    }());
-    exports.Selector = Selector;
     var OutputType;
     (function (OutputType) {
         OutputType[OutputType["AS_LIST"] = 0] = "AS_LIST";

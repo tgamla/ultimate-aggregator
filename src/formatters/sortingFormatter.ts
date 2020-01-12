@@ -1,13 +1,12 @@
 import * as utils from '../common/utils';
+import { INDENTATION } from '../constants/common';
 import * as regexps from '../constants/regexps';
 import { OrderBy, Sorting } from '../expressions/orderBy';
-import { INDENTATION } from '../constants/common';
-
 
 export abstract class SortingFromatter {
-    
-    static getSortingFnDefinition(sortFunctionName: string, sorting: Sorting, hasExtendedSorting: boolean): string {
-        let comparisonDefinition: string = SortingFromatter.getComparisionDefinition(sorting, hasExtendedSorting);
+
+    static defineSortingFunction(sortFunctionName: string, sorting: Sorting, hasExtendedSorting: boolean): string {
+        const comparisonDefinition: string = SortingFromatter.defineComparision(sorting, hasExtendedSorting);
         return `
 function ${sortFunctionName}(x, y) {
     return ${comparisonDefinition};
@@ -15,18 +14,18 @@ function ${sortFunctionName}(x, y) {
 `;
     }
 
-    static getSortedValRefDefinition(expObjRef: string): string {
+    static defineSortedValueReference(expObjRef: string): string {
         return `${expObjRef} = ${expObjRef} ? ${expObjRef}.val : null;`;
     }
 
-    static getNthSortingOutputDefinition(expObjRef: string, comparatorId: string, valRef: string, elementIndex: string): string {
+    static defineNthSortingOutput(expObjRef: string, comparatorId: string, valRef: string, elementIndex: string): string {
         return (
 `${expObjRef} = ${expObjRef}.sort(${comparatorId})[${elementIndex}];
 ${valRef}`
         );
     }
-    
-    static getComplexSortingOutputDefinition(expObjRef: string, comparatorId: string, valRef: string): string {
+
+    static defineComplexSortingOutput(expObjRef: string, comparatorId: string, valRef: string): string {
         return `
 __val__ = ${expObjRef}.sort(${comparatorId});
 __tempRes__ = [];
@@ -38,9 +37,9 @@ ${expObjRef} = __tempRes__;
 `;
     }
 
-    static getComparisionDefinition(sorting: Sorting, hasExtendedSorting: boolean): string {
-        var comparisions = utils.reduce(sorting, (acc: string, orderBy: OrderBy) => {
-            var compareVal: string;
+    static defineComparision(sorting: Sorting, hasExtendedSorting: boolean): string {
+        const comparisions = utils.reduce(sorting, (acc: string, orderBy: OrderBy) => {
+            let compareVal: string;
 
             if (hasExtendedSorting) {
                 compareVal = '.' + (orderBy.isOrderedByValue() ? 'val' : orderBy.id);
@@ -49,11 +48,11 @@ ${expObjRef} = __tempRes__;
                 compareVal = '';
             }
 
-            var isASC: boolean = orderBy.isAscending();
+            const isASC: boolean = orderBy.isAscending();
 
             return utils.format(
                 acc,
-                SortingFromatter.getValuesComparisionDefinition(
+                SortingFromatter.defineValuesComparision(
                     '{0}',
                     (isASC ? 'x' : 'y') + compareVal,
                     (isASC ? 'y' : 'x') + compareVal
@@ -64,7 +63,7 @@ ${expObjRef} = __tempRes__;
         return utils.format(comparisions, '0');
     }
 
-    static getValuesComparisionDefinition(innerComparision: string, valueX: string, valueY: string): string {
+    static defineValuesComparision(innerComparision: string, valueX: string, valueY: string): string {
         return (
 `(${valueX} === ${valueY} ?
     ${innerComparision} :
@@ -74,10 +73,10 @@ ${expObjRef} = __tempRes__;
         (${valueY} != null ? -1 : (${valueX} === null ? 1 : -1))
     )
 )`
-        ).replace(regexps.NEW_LINE_REGEXP, '\n' + INDENTATION);
+        ).replace(regexps.NEW_LINE, '\n' + INDENTATION);
     }
 
-    static getValuesDeclarationDefinition(valRef: string, xValue: string, yValue: string): string {
+    static defineValuesDeclaration(valRef: string, xValue: string, yValue: string): string {
         return (
 `    var __x${valRef}__ = ${xValue};
     var __y${valRef}__ = ${yValue};

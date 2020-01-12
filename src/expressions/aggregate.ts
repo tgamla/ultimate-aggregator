@@ -1,43 +1,44 @@
-import * as utils from "../common/utils";
 import { Logger } from '../common/logger';
-import { Expression, Quotes, ExpressionRegExps } from './expression';
-import { GroupBy, Grouping } from './groupBy';
-import { Sorting, OrderBy } from './orderBy';
-import { AggregationParser } from '../helpers/aggregateParser';
+import * as utils from '../common/utils';
 import { AggregationType } from '../constants/aggregationType';
 import { ExpressionType } from '../constants/expressionType';
-import { AggregateFromatter, AggregateTemplates } from '../formatters/aggregateFormatter';
+import * as REG_EXPS from '../constants/regexps';
+import { AggregateFormatter } from '../formatters/aggregateFormatter';
 import { SortingFromatter } from '../formatters/sortingFormatter';
-
+import { AggregateTemplates } from '../formatters/templates/aggregateTemplates';
+import { AggregationParser } from '../helpers/aggregateParser';
+import { Expression, IQuotes } from './expression';
+import { GroupBy, Grouping } from './groupBy';
+import { OrderBy, Sorting } from './orderBy';
 
 export class Aggregate extends Expression {
 
-    public level: number;
-    public aggregation: AggregationType;
-    public isPrimalAggregation: boolean;
-    public arguments: Array<Expression>;
-    public groupIds: Array<string>;
-    public grouping: Grouping;
-    public sorting: Sorting;
-    public innerExpressions: Array<Aggregate>;
-    public hasGroupByOver: boolean;
-    public hasDistinct: boolean;
-    
+    level: number;
+    aggregation: AggregationType;
+    isPrimalAggregation: boolean;
+    arguments: Expression[];
+    groupIds: string[];
+    grouping: Grouping;
+    sorting: Sorting;
+    innerExpressions: Aggregate[];
+    hasGroupByOver: boolean;
+    hasDistinct: boolean;
+
     constructor(
         logger: Logger,
         rawExpression: any,
         aggregation: AggregationType,
-        queryQuotes: Quotes,
-        queryExpressions: Array<Expression>,
+        queryQuotes: IQuotes,
+        queryExpressions: Expression[],
         groupId: string = null,
         grouping: Grouping = [],
         level: number = 0,
         isPrimalAggregation: boolean = false,
-        args: Array<string> = null,
+        args: string[] = null,
         over: Grouping = null,
         sorting: Sorting = null
     ) {
-        var groupingId: string = over && !over.length ? null : GroupBy.getLastGroupingId(grouping, over);
+        const groupingId: string = over && !over.length ? null : GroupBy.getLastGroupingId(grouping, over);
         super(ExpressionType.AGGREGATE, rawExpression, queryQuotes, groupingId);
         this.aggregation = aggregation;
         this.level = level;
@@ -45,7 +46,7 @@ export class Aggregate extends Expression {
         this.arguments = utils.map(args, (arg) => new Expression(ExpressionType.ARGUMENT, arg, queryQuotes));
         this.grouping = over ? over : utils.copy(grouping);
         this.sorting = sorting;
-        this.hasGroupByOver = over ? true : false;
+        this.hasGroupByOver = !!over;
         this.hasDistinct = false;
         this.innerExpressions = new Array<Aggregate>();
 
@@ -59,7 +60,7 @@ export class Aggregate extends Expression {
         this.validate();
         this.addGroupId(groupId);
 
-        var sibling = this.findSibling(queryExpressions);
+        const sibling = this.findSibling(queryExpressions);
         if (sibling) {
             return sibling;
         }
@@ -72,36 +73,36 @@ export class Aggregate extends Expression {
         }
     }
 
-    public equals(aggregate: Aggregate): boolean {
+    equals(aggregate: Aggregate): boolean {
         return super.equals(aggregate) && this.hasDistinct === aggregate.hasDistinct && this.aggregation === aggregate.aggregation &&
             (GroupBy.compareGrouping(this.grouping, aggregate.grouping) && OrderBy.compareSorting(this.sorting, aggregate.sorting));
     }
 
-    public isPrimalNonOver(): boolean {
+    isPrimalNonOver(): boolean {
         return !this.hasGroupByOver && this.isPrimalAggregation;
     }
 
-    public isPostProcessingType(): boolean {
+    isPostProcessingType(): boolean {
         return this.aggregation === AggregationType.CONCAT || this.aggregation === AggregationType.AVG ||
             (this.sorting && this.aggregation === AggregationType.NTH);
     }
 
-    public getValRef(): string {
+    getValRef(): string {
         return (this.hasExtendedSorting() && (this.aggregation === AggregationType.FIRST || this.aggregation === AggregationType.LAST)) ? '.val' : '';
     }
 
-    public defineInitialProperty(): string {
+    defineInitialProperty(): string {
         return this.id + ': ' + this.defineInitVal();
     }
 
-    public distinctProperty(): string {
-        var distinctLength = (this.aggregation === AggregationType.NTH && !this.sorting && this.hasDistinct) ?
+    distinctProperty(): string {
+        const distinctLength = (this.aggregation === AggregationType.NTH && !this.sorting && this.hasDistinct) ?
             (', ' + utils.addIdSuffix(this.id, 'DistinctLength') + ': 1') : '';
         return utils.addIdSuffix(this.id, 'Distinct') + ': {}' + distinctLength;
     }
 
-    public defineAggregation(): string {
-            var expObjDef: string = this.defineExpObjRef();
+    defineAggregation(): string {
+            const expObjDef: string = this.defineExpObjRef();
 
             if (this.countByAll()) {
                 return expObjDef + '++;';
@@ -110,7 +111,7 @@ export class Aggregate extends Expression {
                 return this.defineAggregationWithSorting(expObjDef);
             }
             else if (this.aggregation === AggregationType.NTH) {
-                var nthNo: string = this.getFirstArgument() || '1';
+                const nthNo: string = this.getFirstArgument() || '1';
                 if (this.hasDistinct) {
                     return utils.format(AggregateTemplates.DISTINCT_NTH,
                         this.code,
@@ -146,32 +147,32 @@ export class Aggregate extends Expression {
             }
             else {
                 if (this.hasDistinct) {
-                    return AggregateFromatter.getAggrDefinition('DISTINCT_' + this.aggregation, this.code, expObjDef, this.defineValReference('Distinct'));
+                    return AggregateFormatter.defineAggregation('DISTINCT_' + this.aggregation, this.code, expObjDef, this.defineValReference('Distinct'));
                 }
                 else {
-                    return AggregateFromatter.getAggrDefinition(this.aggregation, this.code, expObjDef);
+                    return AggregateFormatter.defineAggregation(this.aggregation, this.code, expObjDef);
                 }
             }
     }
 
-    public definePostProcessing(): string {
+    definePostProcessing(): string {
         switch(this.aggregation) {
             case AggregationType.NTH: {
                 if (this.sorting) {
                     return this.defineSorting();
                 }
-            } break;
+            } break; // tslint:disable-line
             case AggregationType.AVG: {
-                return AggregateFromatter.getPostProcessingAvgDefinition(
+                return AggregateFormatter.definePostProcessingAvg(
                     this.defineExpObjRef()
                 );
             }
             case AggregationType.CONCAT: {
-                var sorting: string = this.sorting ?
+                const sorting: string = this.sorting ?
                     this.defineSorting() : '';
-                var delimiter: string = this.getFirstArgument() || '", "';
+                const delimiter: string = this.getFirstArgument() || '", "';
 
-                return AggregateFromatter.getPostProcessingConcatDefinition(
+                return AggregateFormatter.definePostProcessingConcat(
                     this.defineExpObjRef(),
                     delimiter,
                     sorting
@@ -182,26 +183,25 @@ export class Aggregate extends Expression {
         return '';
     }
 
-    public defineSortingComparator(): string {
+    defineSortingComparator(): string {
         if (this.sorting) {
-            return SortingFromatter.getSortingFnDefinition(
+            return SortingFromatter.defineSortingFunction(
                 utils.addIdSuffix(this.id, 'Comparator'),
                 this.sorting,
                 this.hasExtendedSorting()
             );
         }
-        
     }
 
-    public defineExpObjRef(): string {
+    defineExpObjRef(): string {
         return this.getGroupingId() + '.' + this.id;
     }
 
-    public handleGroupIndex(): void {
+    handleGroupIndex(): void {
         super.handleGroupIndex();
 
         if (!this.hasGroupIndex && this.parentGroupingId && (
-            this.aggregation == AggregationType.FIRST ||
+            this.aggregation === AggregationType.FIRST ||
             (this.sorting && this.aggregation === AggregationType.LAST) ||
             (this.aggregation === AggregationType.NTH && !this.sorting && !this.hasDistinct)
         )) {
@@ -209,7 +209,7 @@ export class Aggregate extends Expression {
         }
     }
 
-    public static canHaveSorting(aggrType: string): boolean {
+    static canHaveSorting(aggrType: string): boolean {
         return aggrType === AggregationType.CONCAT || aggrType === AggregationType.FIRST || aggrType === AggregationType.LAST || aggrType === AggregationType.NTH;
     }
 
@@ -222,20 +222,20 @@ export class Aggregate extends Expression {
             this.aggregation === AggregationType.COUNT &&
             (!this.code || this.code === 'true' || this.code === '*')
         ) {
-            this.code = BY_ALL;
+            this.code = AGGREGATE_BY_ALL;
         }
     }
 
     private parseDistinct(logger: Logger): void {
         if (AggregationType[this.aggregation]) {
-            this.code = this.code.replace(ExpressionRegExps.DISTINCT, (...args) => {
+            this.code = this.code.replace(REG_EXPS.DISTINCT, (...args) => {
                 this.hasDistinct = true;
                 return args[2]; // Following character after DISTINCT
             });
         }
 
         if (this.hasDistinct) {
-            if (this.aggregation === AggregationType.COUNT && this.code === BY_ALL) {
+            if (this.aggregation === AggregationType.COUNT && this.code === AGGREGATE_BY_ALL) {
                 this.hasDistinct = false;
                 logger.warning(utils.format('Distinct cannot be used along with COUNT by all values;\n', this.raw));
             }
@@ -247,11 +247,11 @@ export class Aggregate extends Expression {
     }
 
     private canHaveDistinct(): boolean {
-        return AggregateTemplates['DISTINCT_' + this.aggregation] ? true : false;
+        return !!AggregateTemplates['DISTINCT_' + this.aggregation];
     }
 
-    private findSibling(queryExpressions: Array<Expression>): Aggregate {
-        var sibling: Aggregate = utils.find<Aggregate>(queryExpressions, (exp) => exp.equals(this));
+    private findSibling(queryExpressions: Expression[]): Aggregate {
+        const sibling: Aggregate = utils.find<Aggregate>(queryExpressions, (exp) => exp.equals(this));
 
         if (sibling) {
             if (this.level > sibling.level) {
@@ -273,10 +273,10 @@ export class Aggregate extends Expression {
                     (this.sorting && this.aggregation === AggregationType.LAST)
                 )
             ) ||
-            this.checkIndex()
+            this.checkForIndex()
         ) {
             this.hasIndex = true;
-        };
+        }
     }
 
     private matchSorting(): void {
@@ -288,7 +288,7 @@ export class Aggregate extends Expression {
     }
 
     private countByAll(): boolean {
-        return this.aggregation === AggregationType.COUNT && this.code === BY_ALL;
+        return this.aggregation === AggregationType.COUNT && this.code === AGGREGATE_BY_ALL;
     }
 
     private defineInitVal(): string {
@@ -330,10 +330,10 @@ export class Aggregate extends Expression {
     }
 
     private defineAggregationWithSorting(expObjDef: string): string {
-        var orderFillPropsDef: string;
+        let orderFillPropsDef: string;
 
         if (this.hasExtendedSorting()) {
-            var orderFillProps = utils.reduce(this.sorting, (props, orderBy: OrderBy) => {
+            const orderFillProps = utils.reduce(this.sorting, (props, orderBy: OrderBy) => {
                 if (!orderBy.isOrderedByValue()) {
                     props.push(orderBy.id + ': ' + orderBy.code);
                 }
@@ -383,20 +383,20 @@ export class Aggregate extends Expression {
     }
 
     private defineSorting(): string {
-        var expObjRef: string = this.defineExpObjRef();
-        var comparatorId: string = utils.addIdSuffix(this.id, 'Comparator');
-        var valRef: string;
+        const expObjRef: string = this.defineExpObjRef();
+        const comparatorId: string = utils.addIdSuffix(this.id, 'Comparator');
+        let valRef: string;
 
         switch(this.aggregation) {
             case AggregationType.NTH: {
                 if (this.hasExtendedSorting()) {
-                    valRef = SortingFromatter.getSortedValRefDefinition(expObjRef);
+                    valRef = SortingFromatter.defineSortedValueReference(expObjRef);
                 }
                 else {
                     valRef = '';
                 }
 
-                return SortingFromatter.getNthSortingOutputDefinition(
+                return SortingFromatter.defineNthSortingOutput(
                     expObjRef,
                     comparatorId,
                     valRef,
@@ -406,7 +406,7 @@ export class Aggregate extends Expression {
             case AggregationType.CONCAT: {
                 valRef = this.hasExtendedSorting() ? '.val' : '';
 
-                return SortingFromatter.getComplexSortingOutputDefinition(
+                return SortingFromatter.defineComplexSortingOutput(
                     expObjRef,
                     comparatorId,
                     valRef
@@ -421,4 +421,4 @@ export class Aggregate extends Expression {
     }
 }
 
-const BY_ALL = 'ALL';
+const AGGREGATE_BY_ALL = 'ALL';

@@ -14,14 +14,14 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "./expression", "../constants/expressionType"], factory);
+        define(["require", "exports", "../common/utils", "../constants/expressionType", "./expression"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
-    var expression_1 = require("./expression");
     var expressionType_1 = require("../constants/expressionType");
+    var expression_1 = require("./expression");
     var GroupBy = /** @class */ (function (_super) {
         __extends(GroupBy, _super);
         function GroupBy(rawExpression, queryQuotes, queryExpressions, parentGroupingId) {
@@ -33,13 +33,13 @@ var __extends = (this && this.__extends) || (function () {
                 return _this;
             }
             _this.normalize();
-            var sibling;
-            if (sibling = _this.findSibling(queryExpressions)) {
+            var sibling = _this.findSibling(queryExpressions);
+            if (sibling) {
                 return sibling;
             }
             _this.setIds();
             _this.validate();
-            // this.handleIndexes(); TODO:: Expression should have this
+            // this.checkForIndexes(); // TODO:: in expression
             if (queryExpressions) {
                 queryExpressions.push(_this);
             }
@@ -61,7 +61,7 @@ var __extends = (this && this.__extends) || (function () {
             return null;
         };
         GroupBy.compareGrouping = function (groupingA, groupingB) {
-            return groupingA.length == groupingB.length &&
+            return groupingA.length === groupingB.length &&
                 !utils.find(groupingA, function (expA, index) {
                     return !expA.equals(groupingB[index]);
                 });

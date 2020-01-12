@@ -1,26 +1,25 @@
-import * as utils from "../common/utils";
 import { Logger, MessageCodes } from '../common/logger';
-import { Expression, ExpressionRegExps, Quotes } from './expression';
-import { GroupBy, Grouping } from './groupBy';
-import { Aggregate } from './aggregate';
-import { AggregationParser } from '../helpers/aggregateParser';
+import * as utils from '../common/utils';
 import { ExpressionType } from '../constants/expressionType';
-
+import * as REG_EXPS from '../constants/regexps';
+import { AggregationParser } from '../helpers/aggregateParser';
+import { Aggregate } from './aggregate';
+import { Expression, IQuotes } from './expression';
+import { GroupBy, Grouping } from './groupBy';
 
 export class Field extends Expression {
-    
-    public level: number;
-    public innerExpressions: Array<Aggregate>;
-    public groupIds: Array<string>;
-    public grouping: Grouping;
-    public hasNonAggregatedFields: boolean;
-    public isWithinUngroup: boolean;
+
+    level: number;
+    innerExpressions: Aggregate[];
+    groupIds: string[];
+    grouping: Grouping;
+    hasNonAggregatedFields: boolean;
 
     constructor(
         logger: Logger,
         rawExpression: any,
-        queryQuotes: Quotes,
-        queryExpressions: Array<Expression>,
+        queryQuotes: IQuotes,
+        queryExpressions: Expression[],
         groupId: string = null,
         grouping: Grouping = [],
         isWithinUngroup: boolean = false,
@@ -31,8 +30,8 @@ export class Field extends Expression {
         this.grouping = utils.copy(grouping);
         this.addGroupId(groupId);
         this.normalize();
-        
-        var sibling = this.findSibling(queryExpressions);
+
+        const sibling = this.findSibling(queryExpressions);
         if (sibling) {
             return sibling;
         }
@@ -53,8 +52,8 @@ export class Field extends Expression {
     // ============================================ PRIVATE METHODS ============================================
     // =========================================================================================================
 
-    private findSibling(queryExpressions: Array<Expression>): Field {
-        var sibling: Field = utils.find<Field>(queryExpressions, (exp) => {
+    private findSibling(queryExpressions: Expression[]): Field {
+        const sibling: Field = utils.find<Field>(queryExpressions, (exp) => {
             return this.equals(exp) && GroupBy.compareGrouping(this.grouping, exp.grouping);
         });
 
@@ -70,15 +69,15 @@ export class Field extends Expression {
 
     private handleNonAggrFields(): void {
         if (this.parentGroupingId && !this.level) {
-            this.code = this.code.replace(ExpressionRegExps.ROW, (...args) => {
+            this.code = this.code.replace(REG_EXPS.ROW, (...args) => {
                 this.hasNonAggregatedFields = true;
-                return args[1] + this.parentGroupingId + '.row' + args[2]
+                return args[1] + this.parentGroupingId + '.row' + args[2];
             });
         }
     }
 
     private handleIndex(logger: Logger, isWithinUngroup: boolean): void {
-        if (this.checkIndex()) {
+        if (this.checkForIndex()) {
             if (!isWithinUngroup && this.parentGroupingId) {
                 logger.warning(MessageCodes.INDEX_USED_IN_GROUP, this.raw);
             }

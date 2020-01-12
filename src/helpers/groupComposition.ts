@@ -1,9 +1,9 @@
-import * as utils from '../common/utils';
 import { Logger, MessageCodes } from '../common/logger';
+import * as utils from '../common/utils';
 import { Expression } from '../expressions/expression';
 import { GroupBy, Grouping } from '../expressions/groupBy';
 import { Sorting } from '../expressions/orderBy';
-
+import { Selector } from './selector';
 
 export class GroupComposition {
     id: string;
@@ -12,14 +12,23 @@ export class GroupComposition {
     filter: Expression;
     grouping: Grouping;
     sorting: Sorting;
-    expressions: Array<Expression>;
+    expressions: Expression[];
     outputType: OutputType;
     isMain: boolean;
     isUngroup: boolean;
     hasParentGrouping: boolean;
-    innerGroups: Array<GroupComposition>;
+    innerGroups: GroupComposition[];
 
-    constructor(groupId: string, distinct: boolean, filter: Expression, grouping: Grouping, sorting: Sorting, isMain: boolean = false, isUngroup: boolean = false, hasParentGrouping = false) {
+    constructor(
+        groupId: string,
+        distinct: boolean,
+        filter: Expression,
+        grouping: Grouping,
+        sorting: Sorting,
+        isMain: boolean = false,
+        isUngroup: boolean = false,
+        hasParentGrouping = false
+    ) {
         this.id = groupId;
         this.distinct = distinct;
         this.filter = filter;
@@ -33,19 +42,19 @@ export class GroupComposition {
     }
 
     getInitVariable(): string {
-        var initValue: string;
-        
+        let initValue: string;
+
         switch(this.outputType) {
             case OutputType.AS_LIST: initValue = '[]'; break;
             case OutputType.AS_OBJECT: initValue = '{}'; break;
             default: initValue = 'null';
-        };
-        
+        }
+
         return `${this.id} = ${initValue}`;
     }
 
-    getGroupVariableDeclarations(): Array<string> {
-        return utils.reduce<GroupComposition, Array<string>>(this.innerGroups, (declarations, group) => {
+    getGroupVariableDeclarations(): string[] {
+        return utils.reduce<GroupComposition, string[]>(this.innerGroups, (declarations, group) => {
             if (group.isSubSelectorGroup()) {
                 if (group.hasParentGrouping) {
                     declarations.push(group.id);
@@ -66,21 +75,21 @@ export class GroupComposition {
         return this.sorting.length > 0;
     }
 
-    getSubGroups(): Array<GroupComposition> {
+    getSubGroups(): GroupComposition[] {
         return this.innerGroups.filter((innerGroup) => !innerGroup.isUngroup);
     }
 
     getUngroupReference(): string {
-        var directGrouping = this.grouping[this.grouping.length - 1];
-        var groupingId = directGrouping ? directGrouping.id : '__groupings__';
+        const directGrouping = this.grouping[this.grouping.length - 1];
+        const groupingId = directGrouping ? directGrouping.id : '__groupings__';
         return groupingId + '.' + this.id;
     }
 
     extendChildGrouping(logger: Logger, grouping: Grouping): Grouping {
-        var childGrouping: Grouping = utils.copy(this.grouping);
+        const childGrouping: Grouping = utils.copy(this.grouping);
 
         utils.forEach(grouping, (groupBy: GroupBy) => {
-            var matchParentsGroupBy = utils.some(this.grouping, (parentGroupBy: GroupBy) =>
+            const matchParentsGroupBy = utils.some(this.grouping, (parentGroupBy: GroupBy) =>
                 parentGroupBy.equals(groupBy)
                 );
 
@@ -91,6 +100,7 @@ export class GroupComposition {
                 childGrouping.push(groupBy);
             }
         });
+
         return childGrouping;
     }
 
@@ -101,18 +111,8 @@ export class GroupComposition {
     }
 }
 
-export type SubSelector = { string?: Selector } | Array<Selector> | Expression | string;
-
-export class Selector {
-    subSelectors: SubSelector;
-    isLeaf: boolean;
-    ungroupLabelDef: string; // TODO::
-
-    constructor() {
-        this.isLeaf = true;
-        this.ungroupLabelDef = null;
-        this.subSelectors = null;
-    }
+export interface IGroupMap {
+    string?: GroupComposition[];
 }
 
 export enum OutputType {

@@ -14,33 +14,34 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./common/utils", "./common/logger", "./formatters/queryFomatter", "./prototypes/baseQuery", "./group", "./ungroup", "./expressions/expression", "./expressions/field", "./expressions/aggregate", "./expressions/groupBy", "./expressions/orderBy", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess", "./constants/expressionType"], factory);
+        define(["require", "exports", "./common/logger", "./common/utils", "./constants/expressionType", "./expressions/aggregate", "./expressions/expression", "./expressions/field", "./expressions/groupBy", "./expressions/orderBy", "./formatters/queryFomatter", "./group", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess", "./helpers/selector", "./prototypes/baseQuery", "./ungroup"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var utils = require("./common/utils");
     var logger_1 = require("./common/logger");
-    var queryFomatter_1 = require("./formatters/queryFomatter");
-    var baseQuery_1 = require("./prototypes/baseQuery");
-    var group_1 = require("./group");
-    var ungroup_1 = require("./ungroup");
+    var utils = require("./common/utils");
+    var expressionType_1 = require("./constants/expressionType");
+    var aggregate_1 = require("./expressions/aggregate");
     var expression_1 = require("./expressions/expression");
     var field_1 = require("./expressions/field");
-    var aggregate_1 = require("./expressions/aggregate");
     var groupBy_1 = require("./expressions/groupBy");
     var orderBy_1 = require("./expressions/orderBy");
+    var queryFomatter_1 = require("./formatters/queryFomatter");
+    var group_1 = require("./group");
     var groupComposition_1 = require("./helpers/groupComposition");
     var groupingComposition_1 = require("./helpers/groupingComposition");
     var preProcess_1 = require("./helpers/preProcess");
-    var expressionType_1 = require("./constants/expressionType");
+    var selector_1 = require("./helpers/selector");
+    var baseQuery_1 = require("./prototypes/baseQuery");
+    var ungroup_1 = require("./ungroup");
     var Query = /** @class */ (function (_super) {
         __extends(Query, _super);
         function Query(config) {
             if (config === void 0) { config = {}; }
             var _this = _super.call(this, 'Query') || this;
             _this._preFilter = null;
-            _this.datasource = [];
+            _this.dataSource = [];
             _this.allExpressions = null;
             _this.quotes = null;
             _this.fn = null;
@@ -89,20 +90,22 @@ var __extends = (this && this.__extends) || (function () {
                 return this.applyChange();
             }
             else {
-                if (!this.changed)
+                if (!this.changed) {
                     this.bindFn();
+                }
                 return this;
             }
         };
         Query.prototype.removeContext = function (reference) {
             if (reference === undefined) {
                 this.context = {};
-                if (!this.changed)
+                if (!this.changed) {
                     this.bindFn();
+                }
                 return this;
             }
-            var hasChanged = false;
             var refType = typeof reference;
+            var hasChanged = false;
             if (refType === 'string') {
                 if (this.context.hasOwnProperty(reference)) {
                     hasChanged = true;
@@ -156,20 +159,20 @@ var __extends = (this && this.__extends) || (function () {
             this.applySelect(args[0]);
             return this.applyChange();
         };
-        Query.prototype.from = function (datasource) {
+        Query.prototype.from = function (dataSource) {
             var hasTypeChanged;
-            if (datasource == null) {
-                hasTypeChanged = !(this.datasource instanceof Array);
-                this.datasource = [];
+            if (dataSource == null) {
+                hasTypeChanged = !(this.dataSource instanceof Array);
+                this.dataSource = [];
             }
-            else if (typeof datasource === 'object') {
-                hasTypeChanged = this.compareDatasourceType(datasource);
-                this.datasource = datasource;
+            else if (typeof dataSource === 'object') {
+                hasTypeChanged = this.compareDataSourceType(dataSource);
+                this.dataSource = dataSource;
             }
             else {
                 this.logger.warning(logger_1.MessageCodes.UNSUPPORTED_DATA_TYPE);
-                hasTypeChanged = !(this.datasource instanceof Array);
-                this.datasource = [];
+                hasTypeChanged = !(this.dataSource instanceof Array);
+                this.dataSource = [];
             }
             return this.applyChange(hasTypeChanged);
         };
@@ -215,18 +218,18 @@ var __extends = (this && this.__extends) || (function () {
             // TODO::
             return null;
         };
-        Query.prototype.execute = function (datasource) {
+        Query.prototype.execute = function (dataSource) {
             var _this = this;
             var workingData;
-            if (datasource instanceof Query) {
-                workingData = datasource.execute();
+            if (dataSource instanceof Query) {
+                workingData = dataSource.execute();
             }
-            else if (this.datasource instanceof Query) {
-                workingData = this.datasource.execute(datasource);
+            else if (this.dataSource instanceof Query) {
+                workingData = this.dataSource.execute(dataSource);
             }
             else {
-                workingData = datasource === undefined ?
-                    this.datasource : datasource;
+                workingData = dataSource === undefined ?
+                    this.dataSource : dataSource;
             }
             if (typeof workingData === 'object' && workingData.then instanceof Function) {
                 return workingData.then(function (result) {
@@ -341,7 +344,7 @@ var __extends = (this && this.__extends) || (function () {
                     resultSet = this.definePlainResultSet();
                 }
             }
-            this.code = queryFomatter_1.QueryFormatter.formatFunction(this.defineAllDeclaration(), aggregationIterators, this.defineNonGroupedPostProcessing(), groupedResultSet, resultSet, this.defineComparators(), this.groupComposition.defineSorting(), this.debugLevel, this.hasAnyGroupDistinct());
+            this.code = queryFomatter_1.QueryFormatter.defineFunction(this.defineAllDeclaration(), aggregationIterators, this.defineNonGroupedPostProcessing(), groupedResultSet, resultSet, this.defineComparators(), this.groupComposition.defineSorting(), this.debugLevel, this.hasAnyGroupDistinct());
             if (this.debugLevel > 1) {
                 this.logger.debugObject('Query', this);
                 this.logExpressions();
@@ -364,7 +367,7 @@ var __extends = (this && this.__extends) || (function () {
             return utils.some(this.allExpressions, function (exp) { return exp instanceof aggregate_1.Aggregate && exp.isPrimalNonOver(); });
         };
         Query.prototype.hasAnySubGroup = function () {
-            return utils.keysLength(this.groupComposition.innerGroups) ? true : false;
+            return !!(utils.keysLength(this.groupComposition.innerGroups));
         };
         Query.prototype.hasAnyGroupDistinct = function (groupComposition) {
             var _this = this;
@@ -375,13 +378,10 @@ var __extends = (this && this.__extends) || (function () {
             return utils.some(groupComposition.innerGroups, function (groupComp) { return _this.hasAnyGroupDistinct(groupComp); });
         };
         Query.prototype.defineAllDeclaration = function () {
-            return queryFomatter_1.QueryFormatter.getAllDeclarationsDefinition(this.defineMainGroupingDeclaration(), this.defineAllVariableDeclarations());
+            return queryFomatter_1.QueryFormatter.defineAllDeclarations(this.defineMainGroupingDeclaration(), this.defineAllVariableDeclarations());
         };
         Query.prototype.defineMainGroupingDeclaration = function () {
-            return this.defineGrouping(this.groupingComposition, this.groupMap['']);
-        };
-        Query.prototype.isAnyUsingIndex = function (expressions) {
-            return utils.some(expressions, function (exp) { return exp.hasIndex; });
+            return groupingComposition_1.GroupingComposition.defineGrouping(this.groupingComposition, this.groupMap['']);
         };
         Query.prototype.defineAllVariableDeclarations = function () {
             var groupings = this.allExpressions.filter(function (exp) { return exp.isGroupingExpression(); });
@@ -404,15 +404,15 @@ var __extends = (this && this.__extends) || (function () {
                 var groupingCompByLvl = isLastIteration ?
                     this.groupingComposition :
                     groupingComposition_1.GroupingComposition.getComposition(currentLevelAggregations);
-                var isUsingIndex = this.isAnyUsingIndex(currentLevelAggregations);
+                var isUsingIndex = expression_1.Expression.isAnyUsingIndex(currentLevelAggregations);
                 var ungroupsDef = isLastIteration ? this.defineUngroups() : '';
-                var groupingsDef = this.defineGroupings('', [], this.groupingComposition, groupingCompByLvl, isLastIteration);
-                var aggregationDef = this.defineExpAggregations(currentLevelAggregations);
+                var groupingsDef = groupingCompByLvl.defineGroupings(this.groupMap, this.groupingComposition, isLastIteration);
+                var aggregationDef = Query.defineExpAggregations(currentLevelAggregations);
                 if (groupingsDef || ungroupsDef || aggregationDef) {
                     var postProcessing = isLastIteration ?
                         '' :
                         this.defineGroupsPostProcessing(maxLevel - level);
-                    iterators.push(queryFomatter_1.QueryFormatter.formatAggregationIterator(groupingsDef, ungroupsDef, aggregationDef, postProcessing, isUsingIndex));
+                    iterators.push(queryFomatter_1.QueryFormatter.defineAggregationIterator(groupingsDef, ungroupsDef, aggregationDef, postProcessing, isUsingIndex));
                 }
             }
             return iterators.join('\n\n');
@@ -443,66 +443,6 @@ var __extends = (this && this.__extends) || (function () {
                 return acc;
             }, []);
         };
-        Query.prototype.defineGroupings = function (groupingIds, definedGroupings, baseGroupings, currentGroupings, isLastIteration) {
-            var _this = this;
-            return utils.map(currentGroupings.inner, function (groupingComp, groupingId) {
-                var baseGrouping = baseGroupings.inner[groupingId];
-                var currentGroupingIds = groupingIds + groupingId;
-                var parentGrouping = (baseGroupings.groupingExpression ? currentGroupings.id : '__groupings__') +
-                    (baseGroupings.isComplex() ? '.' + groupingId : '');
-                var definition;
-                if (!baseGrouping.hasBeenDefined) {
-                    var currentGroupMaps = _this.groupMap[currentGroupingIds];
-                    definition = utils.format(Query.GROUPING_DECLARATION_TEMPLATE, groupingComp.id, groupingComp.groupingExpression.valueId, groupingComp.groupingExpression.code, parentGrouping, _this.defineGrouping(baseGrouping, currentGroupMaps), _this.defineGroupIndexIncrementation(groupingComp), _this.defineGroupRowAssignment(groupingComp));
-                    baseGrouping.hasBeenDefined = true;
-                    definedGroupings.push(groupingComp.id);
-                }
-                else if (definedGroupings.indexOf(groupingComp.id) == -1) {
-                    definition = utils.format(Query.GROUPING_FETCH, groupingComp.id, groupingComp.groupingExpression.code, parentGrouping);
-                    definedGroupings.push(groupingComp.id);
-                }
-                return (definition || '') + '\n' + _this.defineGroupings(currentGroupingIds, definedGroupings, baseGrouping, groupingComp, isLastIteration);
-            }).join('');
-        };
-        Query.prototype.defineGrouping = function (baseGrouping, groupCompositions) {
-            var definition;
-            var props = [];
-            // Adds declarattion of inner groups
-            utils.forEach(baseGrouping.inner, function (gComp) { return props.push(gComp.groupingExpression.id + ': {}'); });
-            // Adds declaration of group expressions
-            utils.forEach(baseGrouping.getAggregations(), function (exp) {
-                props.push(exp.defineInitialProperty());
-                if (exp.hasDistinct) {
-                    props.push(exp.distinctProperty());
-                }
-            });
-            if (baseGrouping.hasNonAggregatedGroupedFields()) {
-                props.push('row: row');
-            }
-            if (baseGrouping.hasFieldsWithGroupIndex()) {
-                props.push('groupIndex: 1');
-            }
-            utils.forEach(groupCompositions, function (groupComp) {
-                if (groupComp.isUngroup) {
-                    props.push(groupComp.id + ': []');
-                }
-            });
-            definition = props.join(', ');
-            return utils.format(Query.OBJECT_COMPOSITION, definition);
-        };
-        Query.prototype.defineGroupRowAssignment = function (groupingComp) {
-            return groupingComp.hasNonAggregatedGroupedFields() ?
-                '\n        ' + groupingComp.id + '.row = row;' : '';
-        };
-        Query.prototype.defineGroupIndexIncrementation = function (groupingComp) {
-            return groupingComp.hasFieldsWithGroupIndex() ?
-                '\n        ' + groupingComp.id + '.groupIndex++;' : '';
-        };
-        Query.prototype.defineExpAggregations = function (expressions) {
-            return utils.map(expressions, function (exp) {
-                return exp.defineAggregation();
-            }).join('\n');
-        };
         Query.prototype.defineGroupsPostProcessing = function (postProcessingLvl) {
             var expForPostProcessing = this.allExpressions.filter(function (exp) { return exp.level === postProcessingLvl && exp instanceof aggregate_1.Aggregate && exp.isPostProcessingType(); });
             if (expForPostProcessing.length) {
@@ -520,7 +460,7 @@ var __extends = (this && this.__extends) || (function () {
             var select = group._select;
             var isMain = parentGrouping === null;
             var isUngroup = (group instanceof ungroup_1.Ungroup);
-            var hasParentGrouping = parentGrouping && parentGrouping.length ? true : false;
+            var hasParentGrouping = !!(parentGrouping && parentGrouping.length);
             var sorting = this.parseSorting(group._orderBy);
             var filter = this.parseFilter(group._filter);
             var groupComposition = new groupComposition_1.GroupComposition(groupId, group._distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping);
@@ -530,7 +470,7 @@ var __extends = (this && this.__extends) || (function () {
         };
         Query.prototype.parseSelection = function (selection, groupComposition) {
             var _this = this;
-            var selector = new groupComposition_1.Selector();
+            var selector = new selector_1.Selector();
             var grouping;
             if (typeof selection === 'object' && selection !== null) {
                 if (selection instanceof ungroup_1.Ungroup) {
@@ -612,16 +552,9 @@ var __extends = (this && this.__extends) || (function () {
                 new expression_1.Expression(expressionType_1.ExpressionType.FILTER, filter, this.quotes) :
                 null;
         };
-        Query.prototype.findGroupingComposition = function (groupingComposition, groupingId) {
-            var _this = this;
-            if (groupingComposition.id === groupingId) {
-                return groupingComposition;
-            }
-            return utils.returnFound(groupingComposition.inner, function (inner) { return _this.findGroupingComposition(inner, groupingId); });
-        };
         Query.prototype.addFunction = function (fn) {
+            var fnName = fn['name']; // tslint:disable-line:no-string-literal
             var hasChangedContext;
-            var fnName = fn['name'];
             if (!fnName || fnName === 'anonymous') {
                 this.logger.warning(logger_1.MessageCodes.ANONYMOUS_FN_IN_CONTEXT, fn);
                 hasChangedContext = false;
@@ -653,9 +586,9 @@ var __extends = (this && this.__extends) || (function () {
             }, '');
         };
         Query.prototype.definePlainResultSet = function () {
-            var groupingsDefinition = this.defineGroupings('', [], this.groupingComposition, this.groupingComposition, true);
+            var groupingsDefinition = this.groupingComposition.defineGroupings(this.groupMap, this.groupingComposition);
             var nonGroupedFields = this.allExpressions.filter(function (exp) { return !exp.parentGroupingId && exp instanceof field_1.Field; });
-            return queryFomatter_1.QueryFormatter.formatAggregationIterator(groupingsDefinition, '', this.defineResultSet(), '', this.isAnyUsingIndex(nonGroupedFields));
+            return queryFomatter_1.QueryFormatter.defineAggregationIterator(groupingsDefinition, '', this.defineResultSet(), '', expression_1.Expression.isAnyUsingIndex(nonGroupedFields));
         };
         Query.prototype.defineGroupedResultSet = function (parentGroupingComposition, postProcessingLvl, shouldFillResults, groupingIds) {
             var _this = this;
@@ -667,10 +600,10 @@ var __extends = (this && this.__extends) || (function () {
                 var currentGroupingIds = groupingIds + groupingId;
                 var currentGroupCompositions = _this.groupMap[currentGroupingIds];
                 var groupingDeclarations = groupingComp.getGroupingDeclarations(isParentComplex, parentGroupingComposition.id);
-                var innerGroupReference = groupingDeclarations[0];
+                var innerGroupReference = groupingDeclarations[0] || '';
                 var innerGroupDeclaration = groupingDeclarations[1];
-                var groupingsDeclaration = utils.format(Query.GROUPING_VAR_DECLARATION, groupingId, innerGroupReference || '', iteratorName);
                 var innerLoops = _this.defineGroupedResultSet(groupingComp, postProcessingLvl, shouldFillResults, currentGroupingIds);
+                var groupingsDeclaration = queryFomatter_1.QueryFormatter.defineGrouping(groupingId, innerGroupReference, iteratorName);
                 var fillingResults;
                 if (shouldFillResults && currentGroupCompositions) {
                     fillingResults = '';
@@ -687,10 +620,9 @@ var __extends = (this && this.__extends) || (function () {
                 }
                 var postProcessing = _this.defineExpressionsPostProcessing(groupingComp.expressions, postProcessingLvl);
                 if (postProcessing || innerLoops || fillingResults) {
-                    return queryFomatter_1.QueryFormatter.formatGroupedResultSet(innerGroupDeclaration, innerGroupReference || '', iteratorName, groupingsDeclaration, postProcessing, innerLoops, fillingResults);
+                    return queryFomatter_1.QueryFormatter.defineGroupedResultSet(innerGroupDeclaration, innerGroupReference, iteratorName, groupingsDeclaration, postProcessing, innerLoops, fillingResults);
                 }
-                else
-                    return '';
+                return '';
             }).join('\n');
         };
         Query.prototype.defineResultSet = function (groupComposition) {
@@ -703,35 +635,13 @@ var __extends = (this && this.__extends) || (function () {
                 preProcessing.push('(' + groupComposition.filter.code + ')');
             }
             if (groupComposition.distinct) {
-                preProcessing.push(utils.format('!{0}({1}, out)', queryFomatter_1.QueryFormatter.DISTINCT_FN_NAME, containerReference));
+                preProcessing.push(queryFomatter_1.QueryFormatter.defineDistinctPreProcessing(containerReference));
             }
             if (preProcessing.length) {
-                return utils.format(Query.RESULTS_PREPROCESSED_PUSH_TEMPLATE, containerReference, this.defineSelection(groupComposition.selection), preProcessing.join(' && '));
+                return queryFomatter_1.QueryFormatter.definePreProcessedPushTemplate(containerReference, Query.defineSelection(groupComposition.selection), preProcessing);
             }
             else {
-                return utils.format(Query.RESULTS_PUSH_TEMPLATE, containerReference, this.defineSelection(groupComposition.selection));
-            }
-        };
-        Query.prototype.defineSelection = function (selector) {
-            var _this = this;
-            var subSelectors = selector.subSelectors;
-            if (subSelectors instanceof expression_1.Expression) {
-                return subSelectors.code;
-            }
-            else if (typeof subSelectors === 'string') {
-                return subSelectors;
-            }
-            else if (subSelectors instanceof Array) {
-                var expProps = utils.map(subSelectors, function (subSelector) {
-                    return _this.defineSelection(subSelector);
-                }).join(', ');
-                return utils.format('[ {0} ]', expProps);
-            }
-            else {
-                var expProps = utils.map(subSelectors, function (subSelector, groupId) {
-                    return utils.format(Query.PROPEERTY_DEFINITION, groupId, _this.defineSelection(subSelector));
-                }).join(', ');
-                return utils.format('{ {0} }', expProps);
+                return queryFomatter_1.QueryFormatter.defineResultsPushTemplate(containerReference, Query.defineSelection(groupComposition.selection));
             }
         };
         Query.prototype.defineExpressionsPostProcessing = function (expressions, processingLvl) {
@@ -743,7 +653,6 @@ var __extends = (this && this.__extends) || (function () {
             }, '');
         };
         Query.prototype.defineComparators = function () {
-            var _this = this;
             return utils.reduce(this.allExpressions, function (comparators, exp) {
                 if (exp instanceof aggregate_1.Aggregate) {
                     var comparatorDef = exp.defineSortingComparator();
@@ -755,19 +664,16 @@ var __extends = (this && this.__extends) || (function () {
             }, []).concat(utils.reduce(this.groupMap, function (comparators, groups) {
                 utils.forEach(groups, function (group) {
                     if (group.hasSorting()) {
-                        comparators.push(_this.defineGroupComparator(group));
+                        comparators.push(orderBy_1.OrderBy.defineGroupComparator(group));
                     }
                 });
                 return comparators;
             }, [])).join('\n');
         };
-        Query.prototype.defineGroupComparator = function (group) {
-            return utils.format("function {0}(out, __outB__) {\n{1}\n}", utils.addIdSuffix(group.id, 'Comparator'), orderBy_1.OrderBy.defineComparator(group.sorting));
-        };
-        Query.prototype.compareDatasourceType = function (datasource) {
-            return this.datasource instanceof Array ?
-                (datasource instanceof Array) :
-                !(datasource instanceof Array);
+        Query.prototype.compareDataSourceType = function (dataSource) {
+            return this.dataSource instanceof Array ?
+                (dataSource instanceof Array) :
+                !(dataSource instanceof Array);
         };
         Query.prototype.logExpressions = function () {
             var _this = this;
@@ -775,31 +681,50 @@ var __extends = (this && this.__extends) || (function () {
                 return _this.logger.debugObject('Expression', exp);
             });
         };
-        Query.GROUPING_DECLARATION_TEMPLATE = "    {1} = {2};\n    if ({3}.hasOwnProperty({1})) {\n        {0} = {3}[{1}];{5}{6}\n    }\n    else {\n        {0} = {3}[{1}] = {4};\n    }";
-        Query.GROUPING_FETCH = "    {0} = {2}[{1}];";
-        Query.OBJECT_COMPOSITION = "{ {0} }";
-        Query.GROUPING_VAR_DECLARATION = '    {0} = {1}[{2}];';
-        Query.RESULTS_PUSH_TEMPLATE = '{0}.push({1});';
-        Query.RESULTS_PREPROCESSED_PUSH_TEMPLATE = "out = {1};\nif ({2})\n    {0}.push({1});";
-        Query.PROPEERTY_DEFINITION = '"{0}": {1}';
+        Query.defineExpAggregations = function (expressions) {
+            return utils.map(expressions, function (exp) {
+                return exp.defineAggregation();
+            }).join('\n');
+        };
+        Query.defineSelection = function (selector) {
+            var subSelectors = selector.subSelectors;
+            if (subSelectors instanceof expression_1.Expression) {
+                return subSelectors.code;
+            }
+            else if (typeof subSelectors === 'string') {
+                return subSelectors;
+            }
+            else if (subSelectors instanceof Array) {
+                var expProps = utils.map(subSelectors, function (subSelector) {
+                    return Query.defineSelection(subSelector);
+                }).join(', ');
+                return "[ " + expProps + " ]";
+            }
+            else {
+                var expProps = utils.map(subSelectors, function (subSelector, groupId) {
+                    return queryFomatter_1.QueryFormatter.defineProperty(groupId, Query.defineSelection(subSelector));
+                }).join(', ');
+                return "{ " + expProps + " }";
+            }
+        };
         return Query;
     }(baseQuery_1.BaseQuery));
     exports.Query = Query;
     var PRIVATE_PROP_FLAGS = { enumerable: false, writable: true };
     var QUERY_PRIVATE_PROPERTIES = {
-        datasource: PRIVATE_PROP_FLAGS,
-        changed: PRIVATE_PROP_FLAGS,
-        logger: PRIVATE_PROP_FLAGS,
         allExpressions: PRIVATE_PROP_FLAGS,
+        changed: PRIVATE_PROP_FLAGS,
+        code: PRIVATE_PROP_FLAGS,
         context: PRIVATE_PROP_FLAGS,
+        datasource: PRIVATE_PROP_FLAGS,
         debugLevel: PRIVATE_PROP_FLAGS,
         fn: PRIVATE_PROP_FLAGS,
         groupComposition: PRIVATE_PROP_FLAGS,
         groupMap: PRIVATE_PROP_FLAGS,
         groupingComposition: PRIVATE_PROP_FLAGS,
-        quotes: PRIVATE_PROP_FLAGS,
-        code: PRIVATE_PROP_FLAGS,
-        preFiltering: PRIVATE_PROP_FLAGS
+        logger: PRIVATE_PROP_FLAGS,
+        preFiltering: PRIVATE_PROP_FLAGS,
+        quotes: PRIVATE_PROP_FLAGS
         // TODO::
     };
 });

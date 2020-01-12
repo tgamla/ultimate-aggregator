@@ -2,17 +2,17 @@ import { BaseGroup } from './prototypes/baseGroup';
 
 export class Group extends BaseGroup<Group> implements IGroup {
 
-    constructor(...selections: Array<any>) {
+    constructor(...selections: any[]) {
         super('Group', ...selections);
     }
-    
-    by(grouping?: string | Array<string>): Group {
+
+    by(grouping?: string | string[]): Group {
         this.applyList(grouping, '_groupBy');
         return this;
     }
 
     clone(): Group {
-        var copied: Group = new Group(this._select);
+        const copied: Group = new Group(this._select);
 
         super.copyTo(copied);
 

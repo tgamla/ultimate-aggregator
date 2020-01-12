@@ -1,23 +1,24 @@
 import * as utils from '../common/utils';
-import { Expression, Quotes, ExpressionRegExps } from './expression';
-import { SortingFromatter } from '../formatters/sortingFormatter';
 import { ExpressionType } from '../constants/expressionType';
-
+import * as REGEXPS from '../constants/regexps';
+import { SortingFromatter } from '../formatters/sortingFormatter';
+import { GroupComposition } from '../helpers/groupComposition';
+import { Expression, IQuotes } from './expression';
 
 export class OrderBy extends Expression {
-    
-    public orderDirection: OrderByDirection;
-    
+
+    orderDirection: OrderByDirection;
+
     constructor(
         rawExpression: any,
-        queryQuotes: Quotes,
-        queryExpressions: Array<Expression> = null,
+        queryQuotes: IQuotes,
+        queryExpressions: Expression[] = null,
         parentGroupingId: string = null
     ) {
         super(ExpressionType.ORDER_BY, rawExpression, queryQuotes, parentGroupingId);
         this.normalize();
-        
-        var sibling: OrderBy = this.findSibling(queryExpressions);
+
+        const sibling: OrderBy = this.findSibling(queryExpressions);
         if (sibling) {
             return sibling;
         }
@@ -25,7 +26,7 @@ export class OrderBy extends Expression {
         this.parseOrderDirection();
         this.fillDefault();
         super.validate();
-        this.checkForIndexes();
+        // this.checkForIndexes(); // TODO:: in expression
         if (queryExpressions) {
             queryExpressions.push(this);
         }
@@ -52,21 +53,32 @@ export class OrderBy extends Expression {
     static compareSorting(sortingA: Sorting, sortingB: Sorting): boolean {
         return (
                 sortingA instanceof Array && sortingB instanceof Array &&
-                sortingA.length == sortingB.length &&
+                sortingA.length === sortingB.length &&
                 !utils.some<OrderBy>(sortingA, (orderByA, index) => !orderByA.equals(sortingB[index]))
             ) ||
             (sortingA === sortingB);
     }
 
+    static defineGroupComparator(group: GroupComposition): string {
+        const comparatorId = utils.addIdSuffix(group.id, 'Comparator');
+        const comparatorDefinition = OrderBy.defineComparator(group.sorting);
+
+        return utils.format(
+            `function ${comparatorId}(out, __outB__) {
+${comparatorDefinition}
+}`
+        );
+    }
+
     static defineComparator(sorting: Sorting): string {
-        var valuesDeclarations: string = '';
-        var comparisions: string = utils.reduce<OrderBy, string>(sorting, (compDef, orderBy, index) => {
-            var isASC: boolean = orderBy.isAscending();
+        let valuesDeclarations: string = '';
+        const comparisons: string = utils.reduce<OrderBy, string>(sorting, (compDef, orderBy, index) => {
+            const isASC: boolean = orderBy.isAscending();
 
             if (orderBy.isOrderedByValue()) {
                 return utils.format(
                     compDef,
-                    SortingFromatter.getValuesComparisionDefinition(
+                    SortingFromatter.defineValuesComparision(
                         '{0}',
                         (isASC ? 'out' : '__outB__'),
                         (isASC ? '__outB__' : 'out')
@@ -74,32 +86,32 @@ export class OrderBy extends Expression {
                 );
             }
             else {
-                var valRef: string = parseInt(index) === 0 ? '' : index;
-                var xValue: string = orderBy.code;
-                var yValue: string = orderBy.code.replace(ExpressionRegExps.OUT, '$1__outB__$2');
+                const valRef: string = parseInt(index) === 0 ? '' : index;
+                const xValue: string = orderBy.code;
+                const yValue: string = orderBy.code.replace(REGEXPS.OUT, '$1__outB__$2');
 
-                valuesDeclarations += SortingFromatter.getValuesDeclarationDefinition(valRef, xValue, yValue);
-    
+                valuesDeclarations += SortingFromatter.defineValuesDeclaration(valRef, xValue, yValue);
+
                 return utils.format(
                     compDef,
-                    SortingFromatter.getValuesComparisionDefinition(
+                    SortingFromatter.defineValuesComparision(
                         '{0}',
                         '__' + (isASC ? 'x' : 'y') + valRef + '__',
                         '__' + (isASC ? 'y' : 'x') + valRef + '__'
                     )
                 );
-            }          
+            }
         }, '{0}');
 
-        return valuesDeclarations + '\n    return ' + utils.format(comparisions, '0');
+        return valuesDeclarations + '\n    return ' + utils.format(comparisons, '0');
     }
 
     // =========================================================================================================
     // ============================================ PRIVATE METHODS ============================================
     // =========================================================================================================
 
-    private parseOrderDirection(): void {        
-        this.code = this.code.replace(ExpressionRegExps.ORDER_BY_DIRECTION, (...args: Array<any>) => {
+    private parseOrderDirection(): void {
+        this.code = this.code.replace(REGEXPS.ORDER_BY_DIRECTION, (...args: any[]) => {
             this.orderDirection = <OrderByDirection>OrderByDirection[args[1]];
             return '';
         });
@@ -115,25 +127,13 @@ export class OrderBy extends Expression {
         }
     }
 
-    private findSibling(queryExpressions: Array<Expression>): OrderBy {
-        var sibling: OrderBy;
+    private findSibling(queryExpressions: Expression[]): OrderBy {
+        const sibling: OrderBy = null;
 
         // TODO::
 
         return sibling;
     }
-
-    private checkForIndexes(): void {
-        /* TODO::
-        if (this.checkIndex()) {
-            // TODO:: throw warning
-        }
-        if (checkForGroupIndex()) {
-            // TODO:: throw warning
-        }
-        */
-    }
-
 }
 
 export enum OrderByDirection {
@@ -141,6 +141,6 @@ export enum OrderByDirection {
     DESC = 'DESC'
 }
 
-export type Sorting = Array<OrderBy>;
+export type Sorting = OrderBy[];
 
 const ORDER_BY_VALUE = 'VALUE';

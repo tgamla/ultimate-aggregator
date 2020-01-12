@@ -1,0 +1,64 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "jsRules": {},
+    "rules": {
+        "max-line-length": [
+            true,
+            {
+                "limit": 180,
+                "ignore-pattern": "^import |^export {(.*?)}"
+            }
+        ],
+        "quotemark": [ true, "single" ],
+        "member-access": [ true, "no-public" ],
+        "one-line": [ false, "check-else" ],
+        "whitespace": [ false, "check-typecast" ],
+        "ban-types": [ false, ["Function"] ],
+        "no-angle-bracket-type-assertion": false,
+        "trailing-comma": [
+            false,
+            {
+                "multiline": {
+                    "arrays": "always"
+                }
+            }
+        ],
+        "variable-name": [
+            true,
+            "check-format",
+            "allow-leading-underscore"
+        ],
+        "no-console": false,
+        "radix": false,
+        "no-string-throw": false,
+        "member-ordering": [
+            true,
+            {
+                "alphabetize": false,
+                "order": [
+                    "public-instance-field",
+                    "protected-instance-field",
+                    "private-instance-field",
+
+                    "public-static-field",
+                    "protected-static-field",
+                    "private-static-field",
+
+                    "public-constructor",
+                    "constructor",
+
+                    "public-instance-method",
+                    "public-static-method",
+                    "protected-instance-method",
+                    "protected-static-method",
+                    "private-instance-method",
+                    "private-static-method"
+                ]
+            }
+        ]
+    },
+    "rulesDirectory": []
+}

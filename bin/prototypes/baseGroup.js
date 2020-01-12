@@ -34,7 +34,7 @@ var __extends = (this && this.__extends) || (function () {
             return _this;
         }
         BaseGroup.prototype.uniformed = function (apply) {
-            this._uniformed = apply ? true : false;
+            this._uniformed = !!(apply);
             return this;
         };
         BaseGroup.prototype.copyTo = function (copy) {

@@ -1,23 +1,38 @@
-import * as utils from "../common/utils";
-import { Aggregate } from '../expressions/aggregate';
 import { Logger, MessageCodes } from '../common/logger';
-import { Expression, Quotes, ExpressionRegExps } from '../expressions/expression';
-import { GroupBy, Grouping } from '../expressions/groupBy';
-import { Sorting, OrderBy } from '../expressions/orderBy';
+import * as utils from '../common/utils';
 import { AggregationType } from '../constants/aggregationType';
 import { ExpressionType } from '../constants/expressionType';
-
+import * as REG_EXPS from '../constants/regexps';
+import { Aggregate } from '../expressions/aggregate';
+import { Expression, IQuotes } from '../expressions/expression';
+import { GroupBy, Grouping } from '../expressions/groupBy';
+import { OrderBy, Sorting } from '../expressions/orderBy';
+import { DirectiveArguments } from './directiveArguments';
 
 export abstract class AggregationParser {
-    public static parse(expression: Aggregate, logger: Logger, queryExpressions: Array<Expression>, queryQuotes: Quotes, grouping: Grouping, groupId: string, isWithinUngroup: boolean = false) {
-        var match: RegExpMatchArray = expression.code.match(ExpressionRegExps.AGGREGATION);
+// TODO:: refactor parse method - metrics!
+    static parse(
+        expression: Aggregate,
+        logger: Logger,
+        queryExpressions: Expression[],
+        queryQuotes: IQuotes,
+        grouping: Grouping,
+        groupId: string,
+        isWithinUngroup: boolean = false
+    ) {
+        let match: RegExpMatchArray = expression.code.match(REG_EXPS.AGGREGATION);
 
         while(match) {
-            var aggrArgs: DirectiveArguments = this.parseArguments(match);
-            var optionalArgs: Array<string> = aggrArgs.slice(1, aggrArgs.length);
-            var aggrType: string = match[2].toUpperCase();
-            var lastProcessedIndex: number;
-            var isPrimal: boolean = expression.type === ExpressionType.FIELD;
+            const aggrArgs: DirectiveArguments = this.parseArguments(match);
+            const aggrType: string = match[2].toUpperCase();
+            const aggrStartIndex: number = match.index + match[1].length;
+            const optionalArgs: string[] = aggrArgs.slice(1, aggrArgs.length);
+            const isPrimal: boolean = expression.type === ExpressionType.FIELD;
+            const requiresGroupingCompatibility: boolean = !!(isPrimal && !isWithinUngroup && grouping.length);
+            let groupingOver: Grouping;
+            let expressionsOver: Expression[];
+            let nonMatchedGrouping: Grouping;
+            let lastProcessedIndex: number;
 
             if (!aggrArgs.endIndex) {
                 logger.error(utils.format('Missing closing bracket for {0} aggregation:\n{1}', aggrType, match.input));
@@ -26,11 +41,7 @@ export abstract class AggregationParser {
                 lastProcessedIndex = aggrArgs.endIndex;
             }
 
-            var groupingOver: Grouping;
-            var expressionsOver: Array<Expression>;
-            var nonMatchedGrouping: Grouping;
-            var requiresGroupingCompatibility: boolean = isPrimal && !isWithinUngroup && grouping.length ? true : false;
-            var overArgs: DirectiveArguments = this.parseAggregationDirective(
+            const overArgs: DirectiveArguments = this.parseAggregationDirective(
                 expression,
                 logger,
                 match,
@@ -46,34 +57,35 @@ export abstract class AggregationParser {
                     nonMatchedGrouping = [];
 
                     expressionsOver = overArgs.reduce((expressions, arg: string) => {
-                        var groupByExpr: Expression = new Expression(
+                        const groupByExpr: Expression = new Expression(
                             ExpressionType.GROUP_BY,
                             arg,
                             queryQuotes,
                             GroupBy.getLastGroupingId(<Grouping>expressions)
                             );
                         groupByExpr.normalize();
-    
+
                         if (!GroupBy.isOverall(groupByExpr)) {
                             if (requiresGroupingCompatibility && !utils.some<GroupBy>(grouping, (groupBy) => groupBy.equals(groupByExpr))) {
-                                throw 'Primal aggregation cannot have grouping that exceeds over outer scope non empty grouping!\n' + (expression.code.substring(aggrStartIndex, lastProcessedIndex + 1));
+                                throw 'Primal aggregation cannot have grouping that exceeds over outer scope non empty grouping!\n' +
+                                    (expression.code.substring(aggrStartIndex, lastProcessedIndex + 1));
                             }
                             expressions.push(groupByExpr);
                         }
                         return expressions;
                     }, []);
-    
+
                     groupingOver = AggregationParser.matchGroupings(queryExpressions, queryQuotes, grouping, expressionsOver, nonMatchedGrouping);
                 }
                 else {
                     groupingOver = overArgs.reduce((groupingAcc: Grouping, arg: string) => {
-                        var groupExpr: GroupBy = new GroupBy(
+                        const groupExpr: GroupBy = new GroupBy(
                             arg,
                             queryQuotes,
                             queryExpressions,
                             GroupBy.getLastGroupingId(groupingAcc)
                             );
-    
+
                         if (!groupExpr.isOverallGrouping()) {
                             groupingAcc.push(groupExpr);
                         }
@@ -86,8 +98,8 @@ export abstract class AggregationParser {
                 }
             }
 
-            var sorting: Sorting;
-            var orderByArgs: DirectiveArguments = this.parseAggregationDirective(
+            let sorting: Sorting;
+            const orderByArgs: DirectiveArguments = this.parseAggregationDirective(
                 expression,
                 logger,
                 match,
@@ -100,7 +112,7 @@ export abstract class AggregationParser {
                 lastProcessedIndex = orderByArgs.endIndex;
 
                 sorting = orderByArgs.reduce((sortingAcc, arg: string) => {
-                    var orderExpr: OrderBy = new OrderBy(arg, queryQuotes, queryExpressions, GroupBy.getLastGroupingId(grouping));
+                    const orderExpr: OrderBy = new OrderBy(arg, queryQuotes, queryExpressions, GroupBy.getLastGroupingId(grouping));
                     if (orderExpr.normalized === '' && orderByArgs.length > 1) {
                         logger.error(utils.format('Argument expression is empty for {0} clause after {1} aggregation:\n{2}', ExpressionType.ORDER_BY, aggrType, match.input));
                     }
@@ -111,7 +123,7 @@ export abstract class AggregationParser {
                 }, []);
             }
 
-            var innerExpr: Aggregate = new Aggregate(
+            const innerExpr: Aggregate = new Aggregate(
                 logger,
                 aggrArgs[0],
                 AggregationType[aggrType],
@@ -128,8 +140,7 @@ export abstract class AggregationParser {
 
             expression.innerExpressions.push(innerExpr);
 
-            var aggrStartIndex: number = match.index + match[1].length;
-            var groupingRefDefinition = requiresGroupingCompatibility && nonMatchedGrouping && nonMatchedGrouping.length ?
+            const groupingRefDefinition = requiresGroupingCompatibility && nonMatchedGrouping && nonMatchedGrouping.length ?
                 GroupBy.defineGroupingReference(nonMatchedGrouping, grouping) + '.' + innerExpr.id :
                 (<Aggregate>innerExpr).defineExpObjRef();
 
@@ -138,7 +149,7 @@ export abstract class AggregationParser {
                 groupingRefDefinition + innerExpr.getValRef()
             );
 
-            match = expression.code.match(ExpressionRegExps.AGGREGATION);
+            match = expression.code.match(REG_EXPS.AGGREGATION);
         }
     }
 
@@ -151,10 +162,10 @@ export abstract class AggregationParser {
         directiveType: ExpressionType
     ): DirectiveArguments {
 
-        var codeToAnalyse = expression.code.substring(startIndex, expression.code.length);
-        var directiveMatch = codeToAnalyse.match(ExpressionRegExps[directiveType]);
-        var parsedArgs: DirectiveArguments;
-        
+        const codeToAnalyse = expression.code.substring(startIndex, expression.code.length);
+        const directiveMatch = codeToAnalyse.match(REG_EXPS[directiveType]);
+        let parsedArgs: DirectiveArguments;
+
         if (directiveMatch) {
             parsedArgs = this.parseArguments(directiveMatch);
             if (!parsedArgs.endIndex) {
@@ -172,16 +183,15 @@ export abstract class AggregationParser {
     }
 
     private static parseArguments(match: RegExpMatchArray): DirectiveArguments {
-        var i,
-            openingBrackets = 1,
-            commaIndex = 0,
-            code = match.input,
-            codeLenght = code.length,
-            matchLength = match[0].length,
-            openBracketIndex = match.index + matchLength,
-            aggregationArgs = new DirectiveArguments();
+        const code = match.input;
+        const codeLenght = code.length;
+        const matchLength = match[0].length;
+        const openBracketIndex = match.index + matchLength;
+        const aggregationArgs = new DirectiveArguments();
+        let openingBrackets = 1;
+        let commaIndex = 0;
 
-        for (i = openBracketIndex; i < codeLenght; i++) {
+        for (let i = openBracketIndex; i < codeLenght; i++) {
             switch(code[i]) {
                 case '[': // Semicolon can be used in Array constructor.
                 case '(': openingBrackets++; break;
@@ -195,29 +205,29 @@ export abstract class AggregationParser {
                     else {
                         openingBrackets--;
                     }
-                } break;
+                } break; // tslint:disable-line
                 case ',': {
                     if (openingBrackets === 1) {
                         aggregationArgs.push(code.substring(commaIndex || openBracketIndex, i));
                         commaIndex = i + 1;
                     }
-                } break;
+                } break; // tslint:disable-line
             }
         }
         return aggregationArgs;
     }
 
-    private static matchGroupings(queryExpressions: Array<Expression>, queryQuotes: Quotes, grouping: Grouping, overExpressions: Array<Expression>, nonMatchedGrouping: Grouping): Grouping {
-        var overGrouping = [];
-        var parentGroupingId = null;
-        var chainMatches = true;
+    private static matchGroupings(queryExpressions: Expression[], queryQuotes: IQuotes, grouping: Grouping, overExpressions: Expression[], nonMatchedGrouping: Grouping): Grouping {
+        const overGrouping = [];
+        let parentGroupingId = null;
+        let chainMatches = true;
 
         utils.forEach<Expression>(overExpressions, (overExp, index) => {
-            var groupBy: GroupBy = grouping[index];
+            let groupBy: GroupBy = grouping[index];
 
             if (!chainMatches || !groupBy || !groupBy.equals(overExp)) {
                 chainMatches = false;
-                var groupBy = new GroupBy(
+                groupBy = new GroupBy(
                     overExp.raw,
                     queryQuotes,
                     queryExpressions,
@@ -231,14 +241,5 @@ export abstract class AggregationParser {
         });
 
         return overGrouping;
-    }
-}
-
-class DirectiveArguments extends Array<string> {
-    public endIndex: number;
-
-    constructor() {
-        super();
-        this.endIndex = 0;
     }
 }

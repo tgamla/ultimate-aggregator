@@ -1,10 +1,10 @@
 import * as utils from './utils';
 
 export class Logger {
-    private queryName: string;
-    private logLevel: number;
-    private throwingErrorsLevel: number;
-    private debugObjectToJSON: boolean;
+    private readonly queryName: string;
+    private readonly logLevel: number;
+    private readonly throwingErrorsLevel: number;
+    private readonly debugObjectToJSON: boolean;
 
     constructor(id: string, config: IConfig) {
         this.queryName = config.queryName || utils.denormalizeId(id);
@@ -50,8 +50,8 @@ export class Logger {
     }
 
     private getMessage(msg: string|number|Error, refObj: any): string {
-        var message = msg instanceof Error ? msg.message : (
-            typeof msg === 'string' ? msg : Messages[msg]
+        const message = msg instanceof Error ? msg.message : (
+            typeof msg === 'string' ? msg : MESSAGES[msg]
         );
         return refObj ? message + '\n' + this.formatObject(refObj) : message;
     }
@@ -90,17 +90,17 @@ export enum MessageCodes {
     UNNECESSARY_OVERALL_GROUP_BY = 12
 }
 
-const Messages: Object = {
-    '1': 'Unnecessary Ungroup: Please consider replacing Ungroup with Array as selector, inasmuch Ungroups parent is Ungroup;',
-    '2': 'Unnecessary Group: Please consider replacing Group with Array as selector, inasmuch Groups outer scope is Ungroup;',
-    '3': 'Unnecessary Group: Please consider replacing Group with Array as selector, inasmuch Group doesn\'t have grouping;',
-    '4': 'Unnecessary grouping expression: Please consider removing grouping expression, inasmuch it is already part of outser scope grouping;',
-    '5': 'Field Expression that is being defined in grouped scope shouldn\'t use "index" variable!',
-    '6': 'Configuration has NOT been applied! config parameter has to be an Object type!',
-    '7': 'Unsupported data type passed to Query by "from" function!',
-    '8': 'Anonymous function cannot be passed to context, please consider givin it a name!',
-    '9': 'Array cannot be passed to conext as reference! Please pass it as second parameter and reference name as first.',
-    '10': 'Wrong type of reference has been passed to context;',
-    '11': 'Reference value passed to context is empty;',
-    '12': 'Unnecessary overall grouping in expression;'
+const MESSAGES: Object = {
+    1: 'Unnecessary Ungroup: Please consider replacing Ungroup with Array as selector, inasmuch Ungroups parent is Ungroup;',
+    2: 'Unnecessary Group: Please consider replacing Group with Array as selector, inasmuch Groups outer scope is Ungroup;',
+    3: 'Unnecessary Group: Please consider replacing Group with Array as selector, inasmuch Group doesn\'t have grouping;',
+    4: 'Unnecessary grouping expression: Please consider removing grouping expression, inasmuch it is already part of outser scope grouping;',
+    5: 'Field Expression that is being defined in grouped scope shouldn\'t use "index" variable!',
+    6: 'Configuration has NOT been applied! config parameter has to be an Object type!',
+    7: 'Unsupported data type passed to Query by "from" function!',
+    8: 'Anonymous function cannot be passed to context, please consider givin it a name!',
+    9: 'Array cannot be passed to conext as reference! Please pass it as second parameter and reference name as first.',
+    10: 'Wrong type of reference has been passed to context;',
+    11: 'Reference value passed to context is empty;',
+    12: 'Unnecessary overall grouping in expression;'
 };

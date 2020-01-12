@@ -39,11 +39,11 @@ export function concat(rawExpression, delimiter): AggregateFunction {
 export class AggregateFunction implements IAggregateFunction {
     private id: string;
     private type: Type;
-    private _rawExpression: any;
-    private _argument: string | number;
+    private readonly _rawExpression: any;
+    private readonly _argument: string | number;
     private _distinct: boolean;
-    private _over: Array<string>;
-    private _orderBy: Array<string>;
+    private _over: string[];
+    private _orderBy: string[];
 
     constructor(type: Type, rawExpression: any, argExpression?: string) {
         this.id = utils.generateId();
@@ -52,54 +52,57 @@ export class AggregateFunction implements IAggregateFunction {
         this._argument = argExpression;
     }
 
-    public distinct(apply: boolean): AggregateFunction {
-        this._distinct = apply ? true : false;
+    distinct(apply: boolean): AggregateFunction {
+        this._distinct = !!(apply);
         return this;
     }
 
-    public over(grouping: string | Array<string>): AggregateFunction {
+    over(grouping: string | string[]): AggregateFunction {
         this._over = AggregateFunction.getList(grouping);
         return this;
     }
 
-    public orderBy(sorting: string | Array<string>): AggregateFunction {
+    orderBy(sorting: string | string[]): AggregateFunction {
         this._orderBy = AggregateFunction.getList(sorting);
         return this;
     }
 
-    public toString(/* TODO:: use logger or singleton logger */): string {
-        return utils.format(AggregateFunction.FUNCTION_TEMPLATE,
-            this.type.toString(),
-            this._argument ? this._rawExpression + ', ' + this._argument : this._rawExpression,
-            this.defineOver(),
-            this.defineOrderBy(),
-            this._distinct ? 'DISTINCT' : '',
-            );
+    toString(/* TODO:: use logger or singleton logger */): string {
+        const fnType = this.type.toString();
+        const fnExpression = this._argument ? this._rawExpression + ', ' + this._argument : this._rawExpression;
+        const overArgs = this.defineOver();
+        const orderByArgs = this.defineOrderBy();
+        const distinct = this._distinct ? 'DISTINCT' : '';
+
+        return `${fnType}(${distinct} ${fnExpression})${overArgs}${orderByArgs}`;
     }
 
-    public valueOf(/* TODO:: use logger or singleton logger */): string {
+    valueOf(/* TODO:: use logger or singleton logger */): string {
         return this.toString();
     }
 
-    private static getList(list: string | Array<string>): Array<string> {
-        return list instanceof Array ? list :
-            (typeof list === 'string' ? [ list ] : null);
-    }
-
     private defineOver(): string {
-        return this._over ?
-            utils.format(AggregateFunction.DIRECTIVE_TEMPLATE, 'OVER', this._over.join(', ')) :
-            '';
+        if (this._over) {
+            const overArgs = this._over.join(', ');
+            return `OVER(${overArgs})`;
+        }
+
+        return '';
     }
 
     private defineOrderBy(): string {
-        return this._orderBy ?
-            utils.format(AggregateFunction.DIRECTIVE_TEMPLATE, 'ORDER_BY', this._orderBy.join(', ')) :
-            '';
+        if (this._orderBy) {
+            const orderByArgs = this._orderBy.join(', ');
+            return `ORDER_BY(${orderByArgs})`;
+        }
+
+        return '';
     }
 
-    private static FUNCTION_TEMPLATE = '{0}({4} {1}){2}{3}';
-    private static DIRECTIVE_TEMPLATE = '{0}({1})';
+    private static getList(list: string | string[]): string[] {
+        return list instanceof Array ? list :
+            (typeof list === 'string' ? [ list ] : null);
+    }
 }
 
 export enum Type {

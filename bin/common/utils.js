@@ -25,7 +25,7 @@
     function forEachRecursive(source, inner, iterator) {
         forEach(source[inner], function (elem, prop) {
             iterator(elem, prop);
-            if (elem != null && typeof elem == 'object' && elem[inner]) {
+            if (elem != null && typeof elem === 'object' && elem[inner]) {
                 forEachRecursive(elem, inner, iterator);
             }
         });
@@ -93,6 +93,7 @@
     exports.some = some;
     function deepCopy(source) {
         var res = copy(source);
+        // TODO:: filter
         forEach(res, function (val, prop) {
             if (val && typeof val === 'object') {
                 res[prop] = deepCopy(val);
@@ -103,21 +104,23 @@
     exports.deepCopy = deepCopy;
     function copy(source, output) {
         if (typeof source === 'object' && source !== null) {
-            var copy;
+            var copiedObj = void 0;
             if (output) {
-                copy = output;
+                copiedObj = output;
             }
             else if (source instanceof Array) {
-                copy = [];
+                copiedObj = [];
             }
             else {
-                copy = {};
+                copiedObj = {};
             }
-            copy["__proto__"] = Object.getPrototypeOf(source);
+            // TODO:: Object.setPrototypeOf(copy, Object.getPrototypeOf(source));
+            // tslint:disable-next-line
+            copy['__proto__'] = Object.getPrototypeOf(source);
             return reduce(source, function (copied, val, prop) {
                 copied[prop] = val;
                 return copied;
-            }, copy);
+            }, copiedObj);
         }
         else {
             return source;
@@ -138,9 +141,9 @@
         }
     }
     exports.keysLength = keysLength;
-    var id = 0;
+    var currentId = 0;
     function generateId() {
-        return formatId(++id);
+        return formatId(++currentId);
     }
     exports.generateId = generateId;
     function denormalizeId(id) {

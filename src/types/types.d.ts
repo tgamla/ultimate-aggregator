@@ -21,32 +21,32 @@ interface IQuery<T> {
     // TODO:: preOrderBy(filter?: Function | Array<string> | string): IQuery;
     // TODO:: define(varName: string, definition: string): IQuery;
     select(): IQuery<T>;
-    from(datasource?: Array<any> | Object | IQuery<any>): IQuery<T>;
-    groupBy(grouping?: string | Array<string>): IQuery<T>;
+    from(dataSource?: any[] | Object | IQuery<any>): IQuery<T>;
+    groupBy(grouping?: string | string[]): IQuery<T>;
     filter(filter?: /* TODO:: Function | */ string): IQuery<T>;
-    orderBy(sorting?: /* Function | */ Array<string> | string): IQuery<T>;
+    orderBy(sorting?: /* Function | */ string[] | string): IQuery<T>;
     // TODO:: range(start: number, end?: number): IQuery;
     // TODO:: toObject(labelDef?: string): Object;
     toList(): T; // TODO:: Promise<T> | Observable<T>
     // TODO:: toValue(): any;
-    execute(datasource?: Array<any> | Object | IQuery<any>): T; // TODO:: Promise<T> | Observable<T>
+    execute(dataSource?: any[] | Object | IQuery<T>): T; // TODO:: Promise<T> | Observable<T>
     // TODO:: clone(): IQuery;
     // TODO:: toString(): string;
 }
 
 interface IGroup extends IBaseGroup<IGroup> {
-    by(grouping?: string | Array<string>): IGroup;
-    // TODO:: clone(): IGroup;
+    by(grouping?: string | string[]): IGroup;
+    clone(): IGroup;
 }
 
 interface IUngroup extends IBaseGroup<IUngroup> {
-    // TODO:: clone(): IUngroup;
+    clone(): IUngroup;
 }
 
 interface IAggregateFunction {
     distinct(apply?: boolean): IAggregateFunction;
-    over(grouping?: string | Array<string>): IAggregateFunction;
-    orderBy(sorting?: string | Array<string>): IAggregateFunction;
+    over(grouping?: string | string[]): IAggregateFunction;
+    orderBy(sorting?: string | string[]): IAggregateFunction;
     toString(): string;
     valueOf(): string;
     // TODO:: clone

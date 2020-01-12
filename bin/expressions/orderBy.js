@@ -14,15 +14,16 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "../common/utils", "./expression", "../formatters/sortingFormatter", "../constants/expressionType"], factory);
+        define(["require", "exports", "../common/utils", "../constants/expressionType", "../constants/regexps", "../formatters/sortingFormatter", "./expression"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require("../common/utils");
-    var expression_1 = require("./expression");
-    var sortingFormatter_1 = require("../formatters/sortingFormatter");
     var expressionType_1 = require("../constants/expressionType");
+    var REGEXPS = require("../constants/regexps");
+    var sortingFormatter_1 = require("../formatters/sortingFormatter");
+    var expression_1 = require("./expression");
     var OrderBy = /** @class */ (function (_super) {
         __extends(OrderBy, _super);
         function OrderBy(rawExpression, queryQuotes, queryExpressions, parentGroupingId) {
@@ -37,7 +38,7 @@ var __extends = (this && this.__extends) || (function () {
             _this.parseOrderDirection();
             _this.fillDefault();
             _super.prototype.validate.call(_this);
-            _this.checkForIndexes();
+            // this.checkForIndexes(); // TODO:: in expression
             if (queryExpressions) {
                 queryExpressions.push(_this);
             }
@@ -59,33 +60,38 @@ var __extends = (this && this.__extends) || (function () {
         };
         OrderBy.compareSorting = function (sortingA, sortingB) {
             return (sortingA instanceof Array && sortingB instanceof Array &&
-                sortingA.length == sortingB.length &&
+                sortingA.length === sortingB.length &&
                 !utils.some(sortingA, function (orderByA, index) { return !orderByA.equals(sortingB[index]); })) ||
                 (sortingA === sortingB);
         };
+        OrderBy.defineGroupComparator = function (group) {
+            var comparatorId = utils.addIdSuffix(group.id, 'Comparator');
+            var comparatorDefinition = OrderBy.defineComparator(group.sorting);
+            return utils.format("function " + comparatorId + "(out, __outB__) {\n" + comparatorDefinition + "\n}");
+        };
         OrderBy.defineComparator = function (sorting) {
             var valuesDeclarations = '';
-            var comparisions = utils.reduce(sorting, function (compDef, orderBy, index) {
+            var comparisons = utils.reduce(sorting, function (compDef, orderBy, index) {
                 var isASC = orderBy.isAscending();
                 if (orderBy.isOrderedByValue()) {
-                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.getValuesComparisionDefinition('{0}', (isASC ? 'out' : '__outB__'), (isASC ? '__outB__' : 'out')));
+                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.defineValuesComparision('{0}', (isASC ? 'out' : '__outB__'), (isASC ? '__outB__' : 'out')));
                 }
                 else {
                     var valRef = parseInt(index) === 0 ? '' : index;
                     var xValue = orderBy.code;
-                    var yValue = orderBy.code.replace(expression_1.ExpressionRegExps.OUT, '$1__outB__$2');
-                    valuesDeclarations += sortingFormatter_1.SortingFromatter.getValuesDeclarationDefinition(valRef, xValue, yValue);
-                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.getValuesComparisionDefinition('{0}', '__' + (isASC ? 'x' : 'y') + valRef + '__', '__' + (isASC ? 'y' : 'x') + valRef + '__'));
+                    var yValue = orderBy.code.replace(REGEXPS.OUT, '$1__outB__$2');
+                    valuesDeclarations += sortingFormatter_1.SortingFromatter.defineValuesDeclaration(valRef, xValue, yValue);
+                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.defineValuesComparision('{0}', '__' + (isASC ? 'x' : 'y') + valRef + '__', '__' + (isASC ? 'y' : 'x') + valRef + '__'));
                 }
             }, '{0}');
-            return valuesDeclarations + '\n    return ' + utils.format(comparisions, '0');
+            return valuesDeclarations + '\n    return ' + utils.format(comparisons, '0');
         };
         // =========================================================================================================
         // ============================================ PRIVATE METHODS ============================================
         // =========================================================================================================
         OrderBy.prototype.parseOrderDirection = function () {
             var _this = this;
-            this.code = this.code.replace(expression_1.ExpressionRegExps.ORDER_BY_DIRECTION, function () {
+            this.code = this.code.replace(REGEXPS.ORDER_BY_DIRECTION, function () {
                 var args = [];
                 for (var _i = 0; _i < arguments.length; _i++) {
                     args[_i] = arguments[_i];
@@ -103,19 +109,9 @@ var __extends = (this && this.__extends) || (function () {
             }
         };
         OrderBy.prototype.findSibling = function (queryExpressions) {
-            var sibling;
+            var sibling = null;
             // TODO::
             return sibling;
-        };
-        OrderBy.prototype.checkForIndexes = function () {
-            /* TODO::
-            if (this.checkIndex()) {
-                // TODO:: throw warning
-            }
-            if (checkForGroupIndex()) {
-                // TODO:: throw warning
-            }
-            */
         };
         return OrderBy;
     }(expression_1.Expression));

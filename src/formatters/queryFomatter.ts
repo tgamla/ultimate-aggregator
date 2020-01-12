@@ -1,9 +1,18 @@
-import * as regexps from '../constants/regexps';
+import * as utils from '../common/utils';
 import { INDENTATION } from '../constants/common';
-
+import * as regexps from '../constants/regexps';
 
 export abstract class QueryFormatter {
-    public static formatFunction( // TODO:: pass single definition object
+
+    static DISTINCT_FN_NAME = '__hasElement__';
+
+    private static DISTINCT_FN_TEMPLATE = // TODO:: expand to compare objects
+        `function ${QueryFormatter.DISTINCT_FN_NAME}(arr, val) {
+    return arr.indexOf(val) > -1;
+}`;
+    private static PROPERTY_DEFINITION: string = '"{0}": {1}';
+
+    static defineFunction(
         declarations: string,
         aggregationIterators: string,
         postProcessing: string,
@@ -14,31 +23,31 @@ export abstract class QueryFormatter {
         debugLevel: number,
         usesGroupDistinct: boolean
     ): string {
-        let aggregationIteratorsDef = QueryFormatter.formatComment(aggregationIterators, '/* === AGGREGATION ITERATORS === */'),
-            postProcessingDef = QueryFormatter.formatComment(postProcessing, '/* === POST PROCESSING === */'),
-            groupedResultSetDef = QueryFormatter.formatComment(groupedResultSet, '/* === GROUPED RESULT SET === */'),
-            resultSetDef = QueryFormatter.formatComment(resultSet, '/* === NON GROUPED QUERY RESULT SET === */'),
-            comparatorsDef = QueryFormatter.formatComment(comparators, '/* === ORDER BY COMPARATORS === */'),
-            inputDataDebuger = debugLevel > 0 ? '__logger__.debugObject("Input Data", data);' : '',
-            groupedDataDebuger = debugLevel > 1 ? '__logger__.debugObject("Grouped Aggregations", __groupings__);' : '',
-            resultsDebuger = debugLevel > 0 ? '__logger__.debugObject("Results", __results__);' : '',
-            distinctGroupFnDef = usesGroupDistinct ? QueryFormatter.DISTINCT_FN_TEMPLATE : '';
+        const aggregationIteratorsDef = QueryFormatter.defineComment(aggregationIterators, '/* === AGGREGATION ITERATORS === */');
+        const postProcessingDef = QueryFormatter.defineComment(postProcessing, '/* === POST PROCESSING === */');
+        const groupedResultSetDef = QueryFormatter.defineComment(groupedResultSet, '/* === GROUPED RESULT SET === */');
+        const resultSetDef = QueryFormatter.defineComment(resultSet, '/* === NON GROUPED QUERY RESULT SET === */');
+        const comparatorsDef = QueryFormatter.defineComment(comparators, '/* === ORDER BY COMPARATORS === */');
+        const inputDataDebugger = debugLevel > 0 ? '__logger__.debugObject("Input Data", data);' : '';
+        const groupedDataDebugger = debugLevel > 1 ? '__logger__.debugObject("Grouped Aggregations", __groupings__);' : '';
+        const resultsDebugger = debugLevel > 0 ? '__logger__.debugObject("Results", __results__);' : '';
+        const distinctGroupFnDef = usesGroupDistinct ? QueryFormatter.DISTINCT_FN_TEMPLATE : '';
 
         return (
 `
 /* === DECLARATIONS === */
 ${declarations}
-${inputDataDebuger}
+${inputDataDebugger}
 ${aggregationIteratorsDef}
 
-${groupedDataDebuger}
+${groupedDataDebugger}
 ${postProcessingDef}
 
 ${groupedResultSetDef}
 
 ${resultSetDef}
 
-${resultsDebuger}
+${resultsDebugger}
 return __results__${mainSorting};
 
 ${comparatorsDef}
@@ -46,19 +55,13 @@ ${distinctGroupFnDef}`
         );
     }
 
-    public static DISTINCT_FN_NAME = '__hasElement__';
-    private static DISTINCT_FN_TEMPLATE = // TODO:: expand to compare objects
-`function ${QueryFormatter.DISTINCT_FN_NAME}(arr, val) {
-    return arr.indexOf(val) > -1;
-}`;
-
-    public static formatAggregationIterator(groupings: string, ungroups: string, aggregations: string, postProcessing?: string, usesIndex?: boolean): string {
-        let groupingsDef = QueryFormatter.formatComment(groupings, '/* === FILLING GROUPINGS === */'),
-            ungroupsDef = QueryFormatter.formatComment(ungroups, '/* === UNGROUPS === */'),
-            aggregationsDef = QueryFormatter.formatComment(aggregations, '/* === EXPRESSIONS AGGREGATION === */'),
-            postProcessingDef = QueryFormatter.formatComment(postProcessing, '/* === EXPRESSIONS POST PROCESSING === */'),
-            indexingIncrementDef = usesIndex ? 'index++;' : '',
-            indexingInitDef = usesIndex ? 'index = 1;' : '';
+    static defineAggregationIterator(groupings: string, ungroups: string, aggregations: string, postProcessing?: string, usesIndex?: boolean): string {
+        const groupingsDef = QueryFormatter.defineComment(groupings, '/* === FILLING GROUPINGS === */');
+        const ungroupsDef = QueryFormatter.defineComment(ungroups, '/* === UNGROUPS === */');
+        const aggregationsDef = QueryFormatter.defineComment(aggregations, '/* === EXPRESSIONS AGGREGATION === */');
+        const postProcessingDef = QueryFormatter.defineComment(postProcessing, '/* === EXPRESSIONS POST PROCESSING === */');
+        const indexingIncrementDef = usesIndex ? 'index++;' : '';
+        const indexingInitDef = usesIndex ? 'index = 1;' : '';
 
         return (
 `for (prop in data) { // TODO:: optimize it for list
@@ -78,7 +81,7 @@ ${postProcessingDef}
         );
     }
 
-    public static formatGroupedResultSet(
+    static defineGroupedResultSet(
         groupDeclaration: string,
         groupReference: string,
         iteratorName: string,
@@ -87,12 +90,12 @@ ${postProcessingDef}
         innerLoops: string,
         fillingResults: string
     ): string {
-        var iterationDef: string = (
-            QueryFormatter.formatComment(groupingsDeclaration, '/* === GROUPINGS DECLARATIONS === */') + '\n' +
-            QueryFormatter.formatComment(postProcessing, '/* === EXPRESSIONS POST PROCESSING === */') + '\n' +
-            QueryFormatter.formatComment(innerLoops, '/* === AGGREGATE INNER GROUPINGS === */') + '\n' +
-            QueryFormatter.formatComment(fillingResults, '/* === FILLING GROUPING RESULT SET === */')
-        ).replace(regexps.NEW_LINE_REGEXP, '\n' + INDENTATION);
+        const iterationDef: string = (
+            QueryFormatter.defineComment(groupingsDeclaration, '/* === GROUPINGS DECLARATIONS === */') + '\n' +
+            QueryFormatter.defineComment(postProcessing, '/* === EXPRESSIONS POST PROCESSING === */') + '\n' +
+            QueryFormatter.defineComment(innerLoops, '/* === AGGREGATE INNER GROUPINGS === */') + '\n' +
+            QueryFormatter.defineComment(fillingResults, '/* === FILLING GROUPING RESULT SET === */')
+        ).replace(regexps.NEW_LINE, '\n' + INDENTATION);
 
         return (
 `${groupDeclaration};
@@ -102,7 +105,7 @@ for (var ${iteratorName} in ${groupReference}) {
         );
     }
 
-    public static getAllDeclarationsDefinition(mainGroupingDeclaration: string, allVariablesDeclaration: string): string {
+    static defineAllDeclarations(mainGroupingDeclaration: string, allVariablesDeclaration: string): string {
         return (
 `var __results__ = [],
     __groupings__ = ${mainGroupingDeclaration},
@@ -112,7 +115,33 @@ for (var ${iteratorName} in ${groupReference}) {
         );
     }
 
-    private static formatComment(code: string, comment: string): string {
+    static defineGrouping(groupingId: string, innerGroupRef: string, iteratorName: string): string {
+        return `    ${groupingId} = ${innerGroupRef}[${iteratorName}];`;
+    }
+
+    static defineProperty(propName: string, propertyDefinition: string): string {
+        return utils.format(QueryFormatter.PROPERTY_DEFINITION, propName, propertyDefinition);
+    }
+
+    static defineDistinctPreProcessing(containerReference: string): string {
+        return `!${QueryFormatter.DISTINCT_FN_NAME}(${containerReference}, out)`;
+    }
+
+    static definePreProcessedPushTemplate(containerReference: string, selectionDefinition: string, preProcessing: string[]): string {
+        const preProcesses = preProcessing.join(' && ');
+
+        return (
+`out = ${selectionDefinition};
+if (${preProcesses})
+    ${containerReference}.push(out);`
+        );
+    }
+
+    static defineResultsPushTemplate(containerReference: string, selectionDefinition: string): string {
+        return `${containerReference}.push(${selectionDefinition});`;
+    }
+
+    private static defineComment(code: string, comment: string): string {
         return code ? (comment + '\n' + code) : (code || '');
     }
 }
