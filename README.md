@@ -3,26 +3,30 @@ Ultimate-aggregator is javascript query builder for modeling and aggregating dat
 Distribution: UMD, ES5, ISC license.
 
 ## Constructors
----
-#### Query
+
+### Query
 
 **Construtor(config?: IConfig): Query**
+
 Creates new instance of Query.
 For more information about config please go to "config" function section.
 
 **preFilter(filter: string): Query**
+
 Filters input data by filter expression.
 
 **select(selection: any): Query**
+
 Defines composition being used to create results.
 Select accepts Group, Ungroup object instances, expressions with aggregate functions (functional notation is also possible).
-TODO:: merge selections
 
 **distinct(apply: boolean): Query**
+
 Defines if Query result values can repeat.
 For now works only on primitive values.
 
 **config(config: IConfig): Query**
+
 Defines Query configuration.
 Config:
 | Property Name | Description |
@@ -34,7 +38,9 @@ Config:
 | debugObjectToJSON: boolean | defines if debugged object shall be stringified before printing in logs (Default: false) |
 
 
+
 **addContext(reference: Object | Function | string, value?: any): Query**
+
 Add element by reference name to context, so that expressions (except of preFilter) can use it.
 If reference is an object then all properties values are being added with property name as reference.
 If reference is a function then function name is used as reference.
@@ -52,12 +58,15 @@ new ua.Query()
 Both examples works in exact same way.
 
 **removeContext(reference: string | Object): Query**
+
 Removes element reference from context. If object being passed then all references with property names defined in object will be removed from context.
 
 **from(dataSet?: Array<any> | Object | Query): Query**
+
 Defines Query datasource.
 
 **groupBy(grouping?: string | Array<string>): Query**
+
 Defines Query results granularity. Granularity will be defined based on values returned by expression (values will be converted to string and compared as such). If no grouping has been defined then Query grouping can be highest or lowest possible data level granularity. If query has at least one of the following; group (with grouping), ungroup, primal aggregation** (without OVER) in selection, then data granularity is lowest, otherwise highest applies.
 ** Primal aggregation is aggregation associated directly to field expression. In other words it is non inner aggregation e.g. CONCAT is primal aggregation whereas SUM is not;
 ```javascript
@@ -80,70 +89,68 @@ new ua.Query()
     .orderBy(['out.region', 'DESC out.amount'])
 ```
 
-TODO:: range(start: number, end?: number): Query;
-
-TODO:: toObject(labelDef?: string): Object;
-
 **toList(): Array<any>**
+
 Executes Query based on current definition and returns Array of element as results. Each element structure is defined with "select" function.
 
-TODO:: toValue(): any;
-
 **execute(datasource?: Array<any> | Object | Query): any**
+
 Executes Query and returns result based on current definition. Additionaly datasource can be passed to execute. If current defnition datasource is sub-Query then executable datasource is being passed to such sub-Query to execute. Default output results type is Array.
 
-TODO:: clone(): Query
-
-TODO:: toString(): string
-
 ---
-#### Group
+### Group
 Creates additional dimension within outer scope selection, inherits outer scope grouping and increases its data granularity.
 
 **constructor(selection: any): Group**
+
 Defines composition being used to create results.
 Such selection accepts Group, Ungroup object instances, expressions with aggregate functions (functional notation is also possible).
 
 **distinct(apply?: boolean): Group**
+
 Defines if output values can repeat.
 For now works only on primitive values.
 
 **by(grouping?: string | Array<string>): Group**
+
 Defines Group results granularity (inherits at the same time outer scope selection grouping). Granularity will be defined based on values returned by expressions (values will be converted to string and compared as such).
 
 **filter(filter?: string): Group;**
+
 Defines filter expression, by which output data will be filtered.
 
 **orderBy(sorting?: string | Array<string>): Group**
+
 Defines Group output results order with expressions. Each expression should return primitive value. ASC/DESC directive can be used at the beginning of each expression to determine order direction (default is ASC). Empty expression will sort by value ("VALUE" syntax can be used as replacement just to underline meaning). “out” is access variable to output data.
 
-TODO:: uniform(apply: boolean): Group
-
 ---
-#### Ungroup
+### Ungroup
 Creates additional dimension within outer scope selection, with highest data granularity. Also inherits outer scope grouping.
 
 **Constructor(selection: any): Ungroup**
+
 Defines composition being used to create results.
 Such selection accepts expressions with aggregate functions (functional notation is also possible), yet only with OVER directive.
 
 **distinct(apply?: boolean): Ungroup**
+
 Defines if output values can repeat.
 For now works only on primitive values.
 
 **filter(filter?: string): Ungroup**
+
 Defines filter expression, by which output data will be filtered.
 
 **orderBy(sorting?: string | Array<string>): Ungroup**
+
 Defines Ungroup output results order with expressions. Each expression should return primitive value. ASC/DESC directive can be used at the beginning of each expression to determine order direction (default is ASC). Empty expression will sort by value ("VALUE" syntax can be used as replacement just to underline meaning). “out” is access variable to output data.
 
-TODO:: uniform(apply: boolean): Ungroup
-
 ---
-#### AggregateFunction
+### AggregateFunction
 Is a form of expression to manipulate grouped data, same as literal notation of aggregations within string expressions (more in section: "Aggregations").
 
 **constructor(type: AggregateFunctionType, rawExpression: any, argExpression?: string)**
+
 Create new instance of aggregate function, which can be used as expression in selection.
 Example:
 ```javascript
@@ -161,23 +168,6 @@ Example:
 new ua.Query()
     .select(ua.concat('row', '"|"').over([]).orderBy('DESC').distinct(true))
 ```
----
-#### TODO:: Datasource
-constructor(datasource: Array<any> | Object | Query)
-join()
-leftJoin()
-rightJoin()
-fullOuterJoin()
-
----
-
-Each of the constructor can be also executed in functional way to create new instance of an object. Such function is constructor name starting from lowercase.
-Example:
-two of the following notations are equivalent;
-```javascript
-ua.query();
-new ua.Query();
-```
 
 ---
 ## Expressions
@@ -192,6 +182,7 @@ groupIndex - number of iteration within grouped dataset properties.
 out - each output data value used for post processing iteration.
 
 **Field Expression(used in: Query select, Group/Ungroup constructor)**
+
 Field expression is string being used (as a whole) within selection.
 Such expression can consist of Aggregate Functions.
 Can refer to data, row.
@@ -199,21 +190,26 @@ Additionaly can refer to: prop, index, groupIndex, if used within Ungroup.
 If groupig applies to selection with field expression that refers to non aggregated row, then last row within group should be taken.
 
 **Aggregate Expression(used in: Query select, Group/Ungroup constructor, count, sum, avg, min, max, first, last, nth, concat)**
+
 Such expression can consist of Aggregate Functions.
 Can refer to; data, row, prop, index, groupIndex.
 Aggregate function directives (OVER/over, ORDER_BY/orderBy) can refer to same variables.
 
 **PreFilter(used in: Query preFilter)**
+
 Can refer to; data, prop, row.
 
 **Filter(used in: Query/Group/Ungroup filter)**
+
 Can refer to; out.
 Additionaly can refer to: data, prop, row, if used within Ungroup.
 
 **GroupBy(used in: Query groupBy, Group by)**
+
 Can refer to; data, prop, row.
 
 **OrderBy(used in: Query/Group/Ungroup orderBy)**
+
 Can refer to; out.
 
 ---
@@ -368,14 +364,20 @@ e.g. passing web client value to filter in a query executed in Node.js applicati
 
 ---
 # TIPS & TRICKS
+
 Sorting by many values should always start from the most detailed (highest granularity), best would be just one representing uniqueness. Same for filtering, grouping.
+
 Sorting is heavy operation so if data is already sorted (e.g. on db side), it is worth to relly on it as ultimate-aggregator is processing data sequentionally.
+
 It is worth to remember that aggregation functions defer on speed of execution, starting from fastest:
  -FIRST/LAST/NTH/COUNT
  -MAX/MIN/SUM/AVG
  -CONCAT
+
 Additionaly ORDER_BY and DISTINCT directives slows dow execution.
+
 On the other hand if Field/Aggregate expressions are similar (have same grouping, sorting and expression structure) then operation will be done only once.
+
 example:
 ```javascript
 ua.query().select({
@@ -387,4 +389,5 @@ ua.query().select({
     }).by('row.accountId')
 }).groupBy('row.region')
 ```
+
 In such case both; 'SUM(row.invoiceAmount)' for totalAmount, and 'SUM( row ["invoiceAmount"]) OVER (row.region)' for salesPercentage will be one an the same operation.
