@@ -152,7 +152,7 @@ var __extends = (this && this.__extends) || (function () {
         };
         Aggregate.prototype.defineSortingComparator = function () {
             if (this.sorting) {
-                return sortingFormatter_1.SortingFromatter.defineSortingFunction(utils.addIdSuffix(this.id, 'Comparator'), this.sorting, this.hasExtendedSorting());
+                return sortingFormatter_1.SortingFormatter.defineSortingFunction(utils.addIdSuffix(this.id, 'Comparator'), this.sorting, this.hasExtendedSorting());
             }
         };
         Aggregate.prototype.defineExpObjRef = function () {
@@ -314,16 +314,16 @@ var __extends = (this && this.__extends) || (function () {
             switch (this.aggregation) {
                 case aggregationType_1.AggregationType.NTH: {
                     if (this.hasExtendedSorting()) {
-                        valRef = sortingFormatter_1.SortingFromatter.defineSortedValueReference(expObjRef);
+                        valRef = sortingFormatter_1.SortingFormatter.defineSortedValueReference(expObjRef);
                     }
                     else {
                         valRef = '';
                     }
-                    return sortingFormatter_1.SortingFromatter.defineNthSortingOutput(expObjRef, comparatorId, valRef, (parseInt(this.getFirstArgument() || '1') - 1).toString());
+                    return sortingFormatter_1.SortingFormatter.defineNthSortingOutput(expObjRef, comparatorId, valRef, (parseInt(this.getFirstArgument() || '1') - 1).toString());
                 }
                 case aggregationType_1.AggregationType.CONCAT: {
                     valRef = this.hasExtendedSorting() ? '.val' : '';
-                    return sortingFormatter_1.SortingFromatter.defineComplexSortingOutput(expObjRef, comparatorId, valRef);
+                    return sortingFormatter_1.SortingFormatter.defineComplexSortingOutput(expObjRef, comparatorId, valRef);
                 }
                 default: return '';
             }

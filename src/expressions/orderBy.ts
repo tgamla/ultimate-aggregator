@@ -1,7 +1,7 @@
 import * as utils from '../common/utils';
 import { ExpressionType } from '../constants/expressionType';
 import * as REGEXPS from '../constants/regexps';
-import { SortingFromatter } from '../formatters/sortingFormatter';
+import { SortingFormatter } from '../formatters/sortingFormatter';
 import { GroupComposition } from '../helpers/groupComposition';
 import { Expression, IQuotes } from './expression';
 
@@ -78,7 +78,7 @@ ${comparatorDefinition}
             if (orderBy.isOrderedByValue()) {
                 return utils.format(
                     compDef,
-                    SortingFromatter.defineValuesComparision(
+                    SortingFormatter.defineValuesComparision(
                         '{0}',
                         (isASC ? 'out' : '__outB__'),
                         (isASC ? '__outB__' : 'out')
@@ -90,11 +90,11 @@ ${comparatorDefinition}
                 const xValue: string = orderBy.code;
                 const yValue: string = orderBy.code.replace(REGEXPS.OUT, '$1__outB__$2');
 
-                valuesDeclarations += SortingFromatter.defineValuesDeclaration(valRef, xValue, yValue);
+                valuesDeclarations += SortingFormatter.defineValuesDeclaration(valRef, xValue, yValue);
 
                 return utils.format(
                     compDef,
-                    SortingFromatter.defineValuesComparision(
+                    SortingFormatter.defineValuesComparision(
                         '{0}',
                         '__' + (isASC ? 'x' : 'y') + valRef + '__',
                         '__' + (isASC ? 'y' : 'x') + valRef + '__'

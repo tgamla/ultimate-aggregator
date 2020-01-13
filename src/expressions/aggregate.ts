@@ -4,7 +4,7 @@ import { AggregationType } from '../constants/aggregationType';
 import { ExpressionType } from '../constants/expressionType';
 import * as REG_EXPS from '../constants/regexps';
 import { AggregateFormatter } from '../formatters/aggregateFormatter';
-import { SortingFromatter } from '../formatters/sortingFormatter';
+import { SortingFormatter } from '../formatters/sortingFormatter';
 import { AggregateTemplates } from '../formatters/templates/aggregateTemplates';
 import { AggregationParser } from '../helpers/aggregateParser';
 import { Expression, IQuotes } from './expression';
@@ -185,7 +185,7 @@ export class Aggregate extends Expression {
 
     defineSortingComparator(): string {
         if (this.sorting) {
-            return SortingFromatter.defineSortingFunction(
+            return SortingFormatter.defineSortingFunction(
                 utils.addIdSuffix(this.id, 'Comparator'),
                 this.sorting,
                 this.hasExtendedSorting()
@@ -390,13 +390,13 @@ export class Aggregate extends Expression {
         switch(this.aggregation) {
             case AggregationType.NTH: {
                 if (this.hasExtendedSorting()) {
-                    valRef = SortingFromatter.defineSortedValueReference(expObjRef);
+                    valRef = SortingFormatter.defineSortedValueReference(expObjRef);
                 }
                 else {
                     valRef = '';
                 }
 
-                return SortingFromatter.defineNthSortingOutput(
+                return SortingFormatter.defineNthSortingOutput(
                     expObjRef,
                     comparatorId,
                     valRef,
@@ -406,7 +406,7 @@ export class Aggregate extends Expression {
             case AggregationType.CONCAT: {
                 valRef = this.hasExtendedSorting() ? '.val' : '';
 
-                return SortingFromatter.defineComplexSortingOutput(
+                return SortingFormatter.defineComplexSortingOutput(
                     expObjRef,
                     comparatorId,
                     valRef

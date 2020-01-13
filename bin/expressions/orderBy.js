@@ -74,14 +74,14 @@ var __extends = (this && this.__extends) || (function () {
             var comparisons = utils.reduce(sorting, function (compDef, orderBy, index) {
                 var isASC = orderBy.isAscending();
                 if (orderBy.isOrderedByValue()) {
-                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.defineValuesComparision('{0}', (isASC ? 'out' : '__outB__'), (isASC ? '__outB__' : 'out')));
+                    return utils.format(compDef, sortingFormatter_1.SortingFormatter.defineValuesComparision('{0}', (isASC ? 'out' : '__outB__'), (isASC ? '__outB__' : 'out')));
                 }
                 else {
                     var valRef = parseInt(index) === 0 ? '' : index;
                     var xValue = orderBy.code;
                     var yValue = orderBy.code.replace(REGEXPS.OUT, '$1__outB__$2');
-                    valuesDeclarations += sortingFormatter_1.SortingFromatter.defineValuesDeclaration(valRef, xValue, yValue);
-                    return utils.format(compDef, sortingFormatter_1.SortingFromatter.defineValuesComparision('{0}', '__' + (isASC ? 'x' : 'y') + valRef + '__', '__' + (isASC ? 'y' : 'x') + valRef + '__'));
+                    valuesDeclarations += sortingFormatter_1.SortingFormatter.defineValuesDeclaration(valRef, xValue, yValue);
+                    return utils.format(compDef, sortingFormatter_1.SortingFormatter.defineValuesComparision('{0}', '__' + (isASC ? 'x' : 'y') + valRef + '__', '__' + (isASC ? 'y' : 'x') + valRef + '__'));
                 }
             }, '{0}');
             return valuesDeclarations + '\n    return ' + utils.format(comparisons, '0');

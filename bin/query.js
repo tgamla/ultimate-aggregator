@@ -14,11 +14,12 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./common/logger", "./common/utils", "./constants/expressionType", "./expressions/aggregate", "./expressions/expression", "./expressions/field", "./expressions/groupBy", "./expressions/orderBy", "./formatters/queryFomatter", "./group", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess", "./helpers/selector", "./basePrototypes/baseQuery", "./ungroup"], factory);
+        define(["require", "exports", "./basePrototypes/baseQuery", "./common/logger", "./common/utils", "./constants/expressionType", "./expressions/aggregate", "./expressions/expression", "./expressions/field", "./expressions/groupBy", "./expressions/orderBy", "./formatters/queryFomatter", "./group", "./helpers/groupComposition", "./helpers/groupingComposition", "./helpers/preProcess", "./helpers/selector", "./ungroup"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var baseQuery_1 = require("./basePrototypes/baseQuery");
     var logger_1 = require("./common/logger");
     var utils = require("./common/utils");
     var expressionType_1 = require("./constants/expressionType");
@@ -33,7 +34,6 @@ var __extends = (this && this.__extends) || (function () {
     var groupingComposition_1 = require("./helpers/groupingComposition");
     var preProcess_1 = require("./helpers/preProcess");
     var selector_1 = require("./helpers/selector");
-    var baseQuery_1 = require("./basePrototypes/baseQuery");
     var ungroup_1 = require("./ungroup");
     var Query = /** @class */ (function (_super) {
         __extends(Query, _super);

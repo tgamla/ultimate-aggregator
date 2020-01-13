@@ -1,3 +1,5 @@
+import { BaseGroup } from './basePrototypes/baseGroup';
+import { BaseQuery } from './basePrototypes/baseQuery';
 import { Logger, MessageCodes } from './common/logger';
 import * as utils from './common/utils';
 import { ExpressionType } from './constants/expressionType';
@@ -12,8 +14,6 @@ import { GroupComposition, IGroupMap } from './helpers/groupComposition';
 import { GroupingComposition } from './helpers/groupingComposition';
 import { PreProcess } from './helpers/preProcess';
 import { Selector } from './helpers/selector';
-import { BaseGroup } from './prototypes/baseGroup';
-import { BaseQuery } from './prototypes/baseQuery';
 import { Ungroup } from './ungroup';
 
 export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {

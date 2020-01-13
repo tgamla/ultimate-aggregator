@@ -3,10 +3,10 @@ import { INDENTATION } from '../constants/common';
 import * as regexps from '../constants/regexps';
 import { OrderBy, Sorting } from '../expressions/orderBy';
 
-export abstract class SortingFromatter {
+export abstract class SortingFormatter {
 
     static defineSortingFunction(sortFunctionName: string, sorting: Sorting, hasExtendedSorting: boolean): string {
-        const comparisonDefinition: string = SortingFromatter.defineComparision(sorting, hasExtendedSorting);
+        const comparisonDefinition: string = SortingFormatter.defineComparision(sorting, hasExtendedSorting);
         return `
 function ${sortFunctionName}(x, y) {
     return ${comparisonDefinition};
@@ -52,7 +52,7 @@ ${expObjRef} = __tempRes__;
 
             return utils.format(
                 acc,
-                SortingFromatter.defineValuesComparision(
+                SortingFormatter.defineValuesComparision(
                     '{0}',
                     (isASC ? 'x' : 'y') + compareVal,
                     (isASC ? 'y' : 'x') + compareVal
