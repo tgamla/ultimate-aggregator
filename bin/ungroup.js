@@ -14,12 +14,12 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./prototypes/baseGroup"], factory);
+        define(["require", "exports", "./basePrototypes/baseGroup"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var baseGroup_1 = require("./prototypes/baseGroup");
+    var baseGroup_1 = require("./basePrototypes/baseGroup");
     var Ungroup = /** @class */ (function (_super) {
         __extends(Ungroup, _super);
         function Ungroup() {
