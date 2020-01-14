@@ -1,3 +1,4 @@
+import { IBaseQuery } from '../types/iBaseQuery';
 export declare class BaseQuery<T> implements IBaseQuery<T> {
     id: string;
     type: string;

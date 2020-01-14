@@ -1,5 +1,7 @@
 import { BaseQuery } from './basePrototypes/baseQuery';
-export declare class Query<T> extends BaseQuery<Query<T>> {
+import { IConfig } from './types/iConfig';
+import { IQuery } from './types/iQuery';
+export declare class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
     _preFilter: string;
     private preFiltering;
     private dataSource;

@@ -1,3 +1,4 @@
+import { IBaseGroup } from '../types/iBaseGroup';
 import { BaseQuery } from './baseQuery';
 export declare class BaseGroup<T> extends BaseQuery<T> implements IBaseGroup<T> {
     _uniformed: boolean;

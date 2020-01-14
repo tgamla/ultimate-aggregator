@@ -201,7 +201,7 @@ describe('Test Logger', () => {
             ua.query().addContext(function() {});
 
             assert.equal(8, code);
-            assert.equal("function () {}", func.toString());
+            assert.equal("function() {}", func.toString());
         });
 
         it('Pass array to context as reference', () => {

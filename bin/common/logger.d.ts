@@ -1,3 +1,4 @@
+import { IConfig } from '../types/iConfig';
 export declare class Logger {
     private readonly queryName;
     private readonly logLevel;

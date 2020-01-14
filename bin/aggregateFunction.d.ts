@@ -1,3 +1,4 @@
+import { IAggregateFunction } from './types/iAggregateFunction';
 export declare function count(rawExpression: any): AggregateFunction;
 export declare function sum(rawExpression: any): AggregateFunction;
 export declare function avg(rawExpression: any): AggregateFunction;

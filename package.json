@@ -20,8 +20,8 @@
   ],
   "main": "bin/aggregator.js",
   "scripts": {
-    "dev": "tsc -w --declaration",
-    "build": "tsc --declaration",
+    "dev": "tsc -w",
+    "build": "tsc",
     "tests": "mocha tests/**/*.spec.js --expose-gc"
   },
   "types": "**/*.d.ts",

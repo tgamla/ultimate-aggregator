@@ -1,6 +1,7 @@
 import { AggregateFunction, avg, concat, count, first, last, max, min, nth, sum, Type as AggregateFunctionType } from './aggregateFunction';
 import { Group } from './group';
 import { Query } from './query';
+import { IConfig } from './types/iConfig';
 import { Ungroup } from './ungroup';
 export declare function query(config: IConfig): Query<{}>;
 export declare function group(selection: Object): Group;
