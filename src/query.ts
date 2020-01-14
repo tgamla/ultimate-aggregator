@@ -16,7 +16,7 @@ import { PreProcess } from './helpers/preProcess';
 import { Selector } from './helpers/selector';
 import { Ungroup } from './ungroup';
 
-export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
+export class Query<T> extends BaseQuery<Query<T>> {
     _preFilter: string;
     private preFiltering: PreProcess;
 

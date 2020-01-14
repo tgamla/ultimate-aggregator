@@ -206,4 +206,4 @@ export class GroupingComposition {
     }
 }
 
-type GroupingId = string;
+export type GroupingId = string;

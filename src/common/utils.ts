@@ -1,5 +1,5 @@
 
-type IIterator<T> = (val: T, prop?: string) => void;
+export type IIterator<T> = (val: T, prop?: string) => void;
 
 export function forEach<El>(source: any, iterator: IIterator<El>): void {
     if (source instanceof Array || (typeof source === 'object' && source !== null)) {
@@ -23,7 +23,7 @@ export function forEachRecursive<El>(source: any, inner: string, iterator: IIter
     });
 }
 
-type IAccumulator<El, Out> = (acc: Out, val: El, prop?: string) => Out;
+export type IAccumulator<El, Out> = (acc: Out, val: El, prop?: string) => Out;
 
 export function reduce<El, Out>(source: any, iterator: IAccumulator<El, Out>, accumulator: Out): Out {
     forEach<El>(source, (val, prop) => {
@@ -33,7 +33,7 @@ export function reduce<El, Out>(source: any, iterator: IAccumulator<El, Out>, ac
     return accumulator;
 }
 
-type IMapIterator<El, Out> = (val: El, prop?: string) => Out;
+export type IMapIterator<El, Out> = (val: El, prop?: string) => Out;
 
 export function map<InEl, OutEl>(source: any, iterator: IMapIterator<InEl, OutEl>): OutEl[] {
     const res: OutEl[] = [];
@@ -68,7 +68,7 @@ export function find<El>(source: any, predicate: IIterator<El>): El {
     return null;
 }
 
-type IIteratorReturnFound<T> = (val: T, prop?: string) => T;
+export type IIteratorReturnFound<T> = (val: T, prop?: string) => T;
 
 export function returnFound<El>(source: any, predicate: IIteratorReturnFound<El>): El {
     if (!isEmpty(source)) {
