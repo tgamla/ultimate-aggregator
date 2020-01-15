@@ -35,6 +35,11 @@ var BaseGroup = /** @class */ (function (_super) {
         _super.prototype.copyTo.call(this, copy);
         copy.uniformed(this._uniformed);
     };
+    BaseGroup.prototype.getDefinition = function () {
+        var groupDefinition = _super.prototype.getDefinition.call(this);
+        groupDefinition.uniformed = this._uniformed;
+        return groupDefinition;
+    };
     return BaseGroup;
 }(baseQuery_1.BaseQuery));
 exports.BaseGroup = BaseGroup;

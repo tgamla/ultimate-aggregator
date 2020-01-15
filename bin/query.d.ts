@@ -1,8 +1,9 @@
 import { BaseQuery } from './basePrototypes/baseQuery';
 import { IConfig } from './interfaces/iConfig';
+import { IQueryDefinition } from './interfaces/IDefinition';
 import { IQuery } from './interfaces/iQuery';
 export declare class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
-    _preFilter: string;
+    private _preFilter;
     private preFiltering;
     private dataSource;
     private changed;
@@ -22,7 +23,6 @@ export declare class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
     removeContext(reference: string | object): Query<T>;
     preFilter(filter?: string): Query<T>;
     preOrderBy(): Query<T>;
-    define(): Query<T>;
     select(...args: any[]): Query<T>;
     from(dataSource?: any): Query<T>;
     distinct(apply?: boolean): Query<T>;
@@ -37,7 +37,8 @@ export declare class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
     toValue(): any;
     execute(dataSource?: any): T;
     toString(): string;
-    static fromDefinition<T>(definition: string | Object): Query<T>;
+    getDefinition(): IQueryDefinition;
+    static fromDefinition<T>(definition: string | IQueryDefinition): Query<T>;
     protected encapsulate(): Query<T>;
     private applyChange;
     private execPreFiltering;

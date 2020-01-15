@@ -1,17 +1,18 @@
 import { AggregateFunction } from '../aggregateFunction';
 import * as utils from '../common/utils';
 import { IBaseQuery } from '../interfaces/iBaseQuery';
+import { IBaseQueryDefinition } from '../interfaces/IDefinition';
 
 export class BaseQuery<T> implements IBaseQuery<T> {
 
-    id: string;
-    type: string;
-    _select: any;
-    _filter: string;
-    _distinct: boolean;
-    _groupBy: string[];
-    _orderBy: string[];
-    _asList: boolean;
+    protected id: string;
+    protected type: string;
+    protected _select: any;
+    protected _filter: string;
+    protected _distinct: boolean;
+    protected _groupBy: string[];
+    protected _orderBy: string[];
+    protected _asList: boolean;
 
     constructor(type: string) {
         this.id = utils.generateId();
@@ -61,6 +62,19 @@ export class BaseQuery<T> implements IBaseQuery<T> {
         // TODO::
         // If propName && selector is non primitive then thro warning/error
         return this;
+    }
+
+    getDefinition(): IBaseQueryDefinition {
+        return {
+            id: this.id,
+            type: this.type,
+            select: this._select,
+            filter: this._filter,
+            distinct: this._distinct,
+            groupBy: this._groupBy,
+            orderBy: this._orderBy,
+            asList: this._asList
+        };
     }
 
     protected encapsulate(): void {

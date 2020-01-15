@@ -1,4 +1,3 @@
-import { BaseGroup } from './basePrototypes/baseGroup';
 import { BaseQuery } from './basePrototypes/baseQuery';
 import { Logger, MessageCodes } from './common/logger';
 import * as utils from './common/utils';
@@ -15,11 +14,12 @@ import { GroupingComposition } from './helpers/groupingComposition';
 import { PreProcess } from './helpers/preProcess';
 import { Selector } from './helpers/selector';
 import { IConfig } from './interfaces/iConfig';
+import { IBaseQueryDefinition, IQueryDefinition } from './interfaces/IDefinition';
 import { IQuery } from './interfaces/iQuery';
 import { Ungroup } from './ungroup';
 
 export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
-    _preFilter: string;
+    private _preFilter: string;
     private preFiltering: PreProcess;
 
     private dataSource: any;
@@ -160,11 +160,6 @@ export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
         return this.applyChange();
     }
 
-    define(): Query<T> {
-        // TODO::
-        return this.applyChange();
-    }
-
     select(...args: any[]): Query<T> {
         this.applySelect(args[0]);
         return this.applyChange();
@@ -270,18 +265,23 @@ export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
     }
 
     toString(): string {
-        // TODO::
-        return JSON.stringify(this);
+        return JSON.stringify(this.getDefinition());
     }
-
-    static fromDefinition<T>(definition: string | Object): Query<T> {
-        let defObj: BaseQuery<Query<T>>;
+// TODO:: tdd tests
+    getDefinition(): IQueryDefinition {
+        const queryDefinition: IQueryDefinition = <IQueryDefinition>super.getDefinition();
+        queryDefinition.preFilter = this._preFilter;
+        return queryDefinition;
+    }
+// TODO:: tdd tests
+    static fromDefinition<T>(definition: string | IQueryDefinition): Query<T> {
+        let defObj: IQueryDefinition;
 
         if (definition instanceof Object) {
-            defObj = <BaseQuery<Query<T>>>definition;
+            defObj = <IQueryDefinition>definition;
         }
         else if (typeof definition === 'string') {
-            defObj = JSON.parse(definition);
+            defObj = <IQueryDefinition>JSON.parse(definition); // TODO:: try catch
 
             if (!(defObj instanceof Object)) {
                 // TODO::
@@ -295,12 +295,12 @@ export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
 
         const query: Query<T> = new Query<T>();
 
-        if (defObj._select) {
-            query.select(defObj._select);
+        if (defObj.select) {
+            query.select(defObj.select);
         }
 
-        if (defObj._groupBy) {
-            query.groupBy(defObj._groupBy);
+        if (defObj.groupBy) {
+            query.groupBy(defObj.groupBy);
         }
 
         // TODO::
@@ -557,16 +557,17 @@ export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
     }
 
     private createGroupComposition(group: BaseQuery<Query<T> | Group | Ungroup>, grouping: Grouping = [], parentGrouping: Grouping = null): GroupComposition {
-        const groupId: string = group.id;
-        const select: any = group._select;
+        const groupDefinition: IBaseQueryDefinition = group.getDefinition();
+        const groupId: string = groupDefinition.id;
+        const select: any = groupDefinition.select;
         const isMain: boolean = parentGrouping === null;
         const isUngroup: boolean = (group instanceof Ungroup);
         const hasParentGrouping: boolean = !!(parentGrouping && parentGrouping.length);
-        const sorting: Sorting = this.parseSorting(group._orderBy);
-        const filter: Expression = this.parseFilter(group._filter);
-        const groupComposition: GroupComposition = new GroupComposition(groupId, group._distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping);
+        const sorting: Sorting = this.parseSorting(groupDefinition.orderBy);
+        const filter: Expression = this.parseFilter(groupDefinition.filter);
+        const groupComposition: GroupComposition = new GroupComposition(groupId, groupDefinition.distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping);
         groupComposition.selection = this.parseSelection(select, groupComposition);
-        groupComposition.expressions = this.allExpressions.filter((exp: Expression) => exp.groupIds.indexOf(group.id) > -1);
+        groupComposition.expressions = this.allExpressions.filter((exp: Expression) => exp.groupIds.indexOf(groupDefinition.id) > -1);
         return groupComposition;
     }
 
@@ -577,29 +578,30 @@ export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
         if (typeof selection === 'object' && selection !== null) {
             if (selection instanceof Ungroup) {
                 if (groupComposition.isUngroup) {
-                    selection = this.handleMeaninglessSelection(MessageCodes.UNGROUP_WITHIN_UNGROUP, selection);
+                    selection = this.handleMeaninglessSelection(MessageCodes.UNGROUP_WITHIN_UNGROUP, selection.getDefinition().select);
                 }
 
                 grouping = groupComposition.grouping;
             }
             else if (selection instanceof Group) {
-                grouping = this.parseGrouping(selection._groupBy, groupComposition.grouping);
+                const groupDefinition: IBaseQueryDefinition = selection.getDefinition();
+                grouping = this.parseGrouping(groupDefinition.groupBy, groupComposition.grouping);
 
                 if (groupComposition.isUngroup) {
                     if (grouping.length) {
-                        throw 'Group with non empty grouping is not permitted within Ungroup!\n' + JSON.stringify((<Group>selection)._select);
+                        throw 'Group with non empty grouping is not permitted within Ungroup!\n' + JSON.stringify(groupDefinition.select);
                     }
-                    selection = this.handleMeaninglessSelection(MessageCodes.GROUP_WITHIN_UNGROUP, selection);
+                    selection = this.handleMeaninglessSelection(MessageCodes.GROUP_WITHIN_UNGROUP, groupDefinition.select);
                 }
                 else {
                     if (grouping.length) {
                         grouping = groupComposition.extendChildGrouping(this.logger, grouping);
                         if (grouping.length === groupComposition.grouping.length) {
-                            selection = [(<Group>selection)._select];
+                            selection = [groupDefinition.select];
                         }
                     }
                     else {
-                        selection = this.handleMeaninglessSelection(MessageCodes.GROUP_WITH_NO_GROUPING, selection);
+                        selection = this.handleMeaninglessSelection(MessageCodes.GROUP_WITH_NO_GROUPING, groupDefinition.select);
                     }
                 }
             }
@@ -644,9 +646,9 @@ export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {
         return selector;
     }
 
-    private handleMeaninglessSelection(msgCode: number, selection: BaseGroup<Group | Ungroup>): any[] {
-        this.logger.log(msgCode, selection._select);
-        return [selection._select];
+    private handleMeaninglessSelection(msgCode: number, select: any): any[] {
+        this.logger.log(msgCode, select);
+        return [select];
     }
 
     private parseGrouping(rawGrouping: string[], parentGrouping: Grouping): Grouping {

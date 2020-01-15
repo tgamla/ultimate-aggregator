@@ -1,13 +1,14 @@
 import { IBaseQuery } from '../interfaces/iBaseQuery';
+import { IBaseQueryDefinition } from '../interfaces/IDefinition';
 export declare class BaseQuery<T> implements IBaseQuery<T> {
-    id: string;
-    type: string;
-    _select: any;
-    _filter: string;
-    _distinct: boolean;
-    _groupBy: string[];
-    _orderBy: string[];
-    _asList: boolean;
+    protected id: string;
+    protected type: string;
+    protected _select: any;
+    protected _filter: string;
+    protected _distinct: boolean;
+    protected _groupBy: string[];
+    protected _orderBy: string[];
+    protected _asList: boolean;
     constructor(type: string);
     distinct(apply?: boolean): BaseQuery<T>;
     filter(rawFilter?: string): BaseQuery<T>;
@@ -16,6 +17,7 @@ export declare class BaseQuery<T> implements IBaseQuery<T> {
     asObject(propertyExpression?: string): BaseQuery<T>;
     asList(): BaseQuery<T>;
     asValue(propName?: string): BaseQuery<T>;
+    getDefinition(): IBaseQueryDefinition;
     protected encapsulate(): void;
     protected applySelect(...args: any[]): void;
     protected applyList(rawList: string | string[], appliedListRef: string): boolean;

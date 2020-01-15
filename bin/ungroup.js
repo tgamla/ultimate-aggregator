@@ -35,6 +35,9 @@ var Ungroup = /** @class */ (function (_super) {
         _super.prototype.copyTo.call(this, copied);
         return copied;
     };
+    Ungroup.prototype.getDefinition = function () {
+        return _super.prototype.getDefinition.call(this);
+    };
     return Ungroup;
 }(baseGroup_1.BaseGroup));
 exports.Ungroup = Ungroup;

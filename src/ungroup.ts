@@ -1,4 +1,5 @@
 import { BaseGroup } from './basePrototypes/baseGroup';
+import { IBaseGroupDefinition as IUngroupDefinition } from './interfaces/IDefinition';
 import { IUngroup } from './interfaces/iUngroup';
 
 export class Ungroup extends BaseGroup<Ungroup> implements IUngroup {
@@ -12,5 +13,9 @@ export class Ungroup extends BaseGroup<Ungroup> implements IUngroup {
         super.copyTo(copied);
 
         return copied;
+    }
+
+    getDefinition(): IUngroupDefinition {
+        return super.getDefinition();
     }
 }

@@ -1,6 +1,7 @@
 import { AggregateFunction, avg, concat, count, first, last, max, min, nth, sum, Type as AggregateFunctionType } from './aggregateFunction';
 import { Group } from './group';
 import { IConfig } from './interfaces/iConfig';
+import { IBaseGroupDefinition as IGroupDefinition, IBaseGroupDefinition as IUngroupDefinition, IQueryDefinition } from './interfaces/IDefinition';
 import { Query } from './query';
 import { Ungroup } from './ungroup';
 
@@ -15,6 +16,7 @@ export {
     Query,
     Group,
     Ungroup,
+
     AggregateFunction,
     AggregateFunctionType,
     count,
@@ -26,5 +28,9 @@ export {
     last,
     nth,
     concat,
-    IConfig
+
+    IConfig,
+    IQueryDefinition,
+    IGroupDefinition,
+    IUngroupDefinition
 };

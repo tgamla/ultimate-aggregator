@@ -40,6 +40,9 @@ var Group = /** @class */ (function (_super) {
         copied.by(this._groupBy);
         return copied;
     };
+    Group.prototype.getDefinition = function () {
+        return _super.prototype.getDefinition.call(this);
+    };
     return Group;
 }(baseGroup_1.BaseGroup));
 exports.Group = Group;

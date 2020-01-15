@@ -44,6 +44,18 @@ var BaseQuery = /** @class */ (function () {
         // If propName && selector is non primitive then thro warning/error
         return this;
     };
+    BaseQuery.prototype.getDefinition = function () {
+        return {
+            id: this.id,
+            type: this.type,
+            select: this._select,
+            filter: this._filter,
+            distinct: this._distinct,
+            groupBy: this._groupBy,
+            orderBy: this._orderBy,
+            asList: this._asList
+        };
+    };
     BaseQuery.prototype.encapsulate = function () {
         // TODO::
     };

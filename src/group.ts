@@ -1,4 +1,5 @@
 import { BaseGroup } from './basePrototypes/baseGroup';
+import { IBaseGroupDefinition as IGroupDefinition } from './interfaces/IDefinition';
 import { IGroup } from './interfaces/iGroup';
 
 export class Group extends BaseGroup<Group> implements IGroup {
@@ -20,5 +21,9 @@ export class Group extends BaseGroup<Group> implements IGroup {
         copied.by(this._groupBy);
 
         return copied;
+    }
+
+    getDefinition(): IGroupDefinition {
+        return super.getDefinition();
     }
 }

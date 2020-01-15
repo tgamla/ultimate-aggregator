@@ -141,10 +141,6 @@ var Query = /** @class */ (function (_super) {
         // TODO::
         return this.applyChange();
     };
-    Query.prototype.define = function () {
-        // TODO::
-        return this.applyChange();
-    };
     Query.prototype.select = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
@@ -236,16 +232,22 @@ var Query = /** @class */ (function (_super) {
         return this.calculate(workingData);
     };
     Query.prototype.toString = function () {
-        // TODO::
-        return JSON.stringify(this);
+        return JSON.stringify(this.getDefinition());
     };
+    // TODO:: tdd tests
+    Query.prototype.getDefinition = function () {
+        var queryDefinition = _super.prototype.getDefinition.call(this);
+        queryDefinition.preFilter = this._preFilter;
+        return queryDefinition;
+    };
+    // TODO:: tdd tests
     Query.fromDefinition = function (definition) {
         var defObj;
         if (definition instanceof Object) {
             defObj = definition;
         }
         else if (typeof definition === 'string') {
-            defObj = JSON.parse(definition);
+            defObj = JSON.parse(definition); // TODO:: try catch
             if (!(defObj instanceof Object)) {
                 // TODO::
                 throw new Error();
@@ -256,11 +258,11 @@ var Query = /** @class */ (function (_super) {
             throw new Error();
         }
         var query = new Query();
-        if (defObj._select) {
-            query.select(defObj._select);
+        if (defObj.select) {
+            query.select(defObj.select);
         }
-        if (defObj._groupBy) {
-            query.groupBy(defObj._groupBy);
+        if (defObj.groupBy) {
+            query.groupBy(defObj.groupBy);
         }
         // TODO::
         return query;
@@ -450,16 +452,17 @@ var Query = /** @class */ (function (_super) {
     Query.prototype.createGroupComposition = function (group, grouping, parentGrouping) {
         if (grouping === void 0) { grouping = []; }
         if (parentGrouping === void 0) { parentGrouping = null; }
-        var groupId = group.id;
-        var select = group._select;
+        var groupDefinition = group.getDefinition();
+        var groupId = groupDefinition.id;
+        var select = groupDefinition.select;
         var isMain = parentGrouping === null;
         var isUngroup = (group instanceof ungroup_1.Ungroup);
         var hasParentGrouping = !!(parentGrouping && parentGrouping.length);
-        var sorting = this.parseSorting(group._orderBy);
-        var filter = this.parseFilter(group._filter);
-        var groupComposition = new groupComposition_1.GroupComposition(groupId, group._distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping);
+        var sorting = this.parseSorting(groupDefinition.orderBy);
+        var filter = this.parseFilter(groupDefinition.filter);
+        var groupComposition = new groupComposition_1.GroupComposition(groupId, groupDefinition.distinct, filter, grouping, sorting, isMain, isUngroup, hasParentGrouping);
         groupComposition.selection = this.parseSelection(select, groupComposition);
-        groupComposition.expressions = this.allExpressions.filter(function (exp) { return exp.groupIds.indexOf(group.id) > -1; });
+        groupComposition.expressions = this.allExpressions.filter(function (exp) { return exp.groupIds.indexOf(groupDefinition.id) > -1; });
         return groupComposition;
     };
     Query.prototype.parseSelection = function (selection, groupComposition) {
@@ -469,27 +472,28 @@ var Query = /** @class */ (function (_super) {
         if (typeof selection === 'object' && selection !== null) {
             if (selection instanceof ungroup_1.Ungroup) {
                 if (groupComposition.isUngroup) {
-                    selection = this.handleMeaninglessSelection(logger_1.MessageCodes.UNGROUP_WITHIN_UNGROUP, selection);
+                    selection = this.handleMeaninglessSelection(logger_1.MessageCodes.UNGROUP_WITHIN_UNGROUP, selection.getDefinition().select);
                 }
                 grouping = groupComposition.grouping;
             }
             else if (selection instanceof group_1.Group) {
-                grouping = this.parseGrouping(selection._groupBy, groupComposition.grouping);
+                var groupDefinition = selection.getDefinition();
+                grouping = this.parseGrouping(groupDefinition.groupBy, groupComposition.grouping);
                 if (groupComposition.isUngroup) {
                     if (grouping.length) {
-                        throw 'Group with non empty grouping is not permitted within Ungroup!\n' + JSON.stringify(selection._select);
+                        throw 'Group with non empty grouping is not permitted within Ungroup!\n' + JSON.stringify(groupDefinition.select);
                     }
-                    selection = this.handleMeaninglessSelection(logger_1.MessageCodes.GROUP_WITHIN_UNGROUP, selection);
+                    selection = this.handleMeaninglessSelection(logger_1.MessageCodes.GROUP_WITHIN_UNGROUP, groupDefinition.select);
                 }
                 else {
                     if (grouping.length) {
                         grouping = groupComposition.extendChildGrouping(this.logger, grouping);
                         if (grouping.length === groupComposition.grouping.length) {
-                            selection = [selection._select];
+                            selection = [groupDefinition.select];
                         }
                     }
                     else {
-                        selection = this.handleMeaninglessSelection(logger_1.MessageCodes.GROUP_WITH_NO_GROUPING, selection);
+                        selection = this.handleMeaninglessSelection(logger_1.MessageCodes.GROUP_WITH_NO_GROUPING, groupDefinition.select);
                     }
                 }
             }
@@ -521,9 +525,9 @@ var Query = /** @class */ (function (_super) {
         }
         return selector;
     };
-    Query.prototype.handleMeaninglessSelection = function (msgCode, selection) {
-        this.logger.log(msgCode, selection._select);
-        return [selection._select];
+    Query.prototype.handleMeaninglessSelection = function (msgCode, select) {
+        this.logger.log(msgCode, select);
+        return [select];
     };
     Query.prototype.parseGrouping = function (rawGrouping, parentGrouping) {
         var _this = this;

@@ -58,7 +58,8 @@
                     "private-static-method"
                 ]
             }
-        ]
+        ],
+        "object-literal-sort-keys": false
     },
     "rulesDirectory": []
 }
