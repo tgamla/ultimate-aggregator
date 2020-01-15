@@ -1,6 +1,10 @@
 # Ultimate-Aggregator
 Ultimate-aggregator is javascript query builder for modeling and aggregating data in SQL fashion, focused on performance of queries exceution. Works well in both; modeling multi-dimension presentation data in front-end so as supporting dataminig in NO-SQL solutions in back-end.
-Distribution: UMD, ES5, ISC license.
+
+Distribution:
+
+module loader: CommonJS, JS version: ES5, ISC license.
+
 
 ## Constructors
 

@@ -1,5 +1,6 @@
 
 export type IIterator<T> = (val: T, prop?: string) => void;
+export type ISomeIterator<T> = (val: T, prop?: string) => boolean;
 
 export function forEach<El>(source: any, iterator: IIterator<El>): void {
     if (source instanceof Array || (typeof source === 'object' && source !== null)) {
@@ -56,7 +57,7 @@ export function reverseMap<InEl, OutEl>(source: any, iterator: IMapIterator<InEl
     return res;
 }
 
-export function find<El>(source: any, predicate: IIterator<El>): El {
+export function find<El>(source: any, predicate: ISomeIterator<El>): El {
     if (!isEmpty(source)) {
         for (const prop in source) {
             if (source.hasOwnProperty(prop) && predicate(source[prop], prop)) {
@@ -85,7 +86,7 @@ export function returnFound<El>(source: any, predicate: IIteratorReturnFound<El>
     return null;
 }
 
-export function some<El>(source: any, predicate: IIterator<El>): boolean {
+export function some<El>(source: any, predicate: ISomeIterator<El>): boolean {
     if (!isEmpty(source)) {
         for (const prop in source) {
             if (source.hasOwnProperty(prop) && predicate(source[prop], prop)) {

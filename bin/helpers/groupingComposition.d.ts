@@ -25,7 +25,7 @@ export declare class GroupingComposition {
     hasFieldsWithGroupIndex(): boolean;
     static getComposition(expressions: Expression[]): GroupingComposition;
     static defineGrouping(baseGrouping: GroupingComposition, groupCompositions: GroupComposition[]): string;
-    private static defineGroupRowAssignment(groupingComp);
-    private static defineGroupIndexIncrementation(groupingComp);
+    private static defineGroupRowAssignment;
+    private static defineGroupIndexIncrementation;
 }
 export declare type GroupingId = string;

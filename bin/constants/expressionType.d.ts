@@ -4,5 +4,5 @@ export declare enum ExpressionType {
     GROUP_BY = "GROUP_BY",
     ORDER_BY = "ORDER_BY",
     FILTER = "FILTER",
-    ARGUMENT = "ARGUMENT",
+    ARGUMENT = "ARGUMENT"
 }

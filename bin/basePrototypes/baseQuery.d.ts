@@ -1,4 +1,4 @@
-import { IBaseQuery } from '../types/iBaseQuery';
+import { IBaseQuery } from '../interfaces/iBaseQuery';
 export declare class BaseQuery<T> implements IBaseQuery<T> {
     id: string;
     type: string;
@@ -22,5 +22,5 @@ export declare class BaseQuery<T> implements IBaseQuery<T> {
     protected applyDistinct(apply?: boolean): boolean;
     protected applyFilter(rawFilter: string): boolean;
     protected copyTo(copy: BaseQuery<T>): void;
-    private copySelect(selection);
+    private copySelect;
 }

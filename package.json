@@ -19,14 +19,14 @@
     "bin/"
   ],
   "main": "bin/aggregator.js",
+  "types": "bin/aggregator.d.ts",
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc",
     "tests": "mocha tests/**/*.spec.js --expose-gc"
   },
-  "types": "**/*.d.ts",
   "devDependencies": {
-    "typescript": "2.5.3",
+    "typescript": "3.7.4",
     "mocha": "4.1.0",
     "tslint": "5.20.1"
   },

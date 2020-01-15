@@ -27,16 +27,16 @@ export declare class Aggregate extends Expression {
     defineExpObjRef(): string;
     handleGroupIndex(): void;
     static canHaveSorting(aggrType: string): boolean;
-    private fillDefault();
-    private parseDistinct(logger);
-    private canHaveDistinct();
-    private findSibling(queryExpressions);
-    private handleIndex();
-    private matchSorting();
-    private hasExtendedSorting();
-    private countByAll();
-    private defineInitVal();
-    private defineAggregationWithSorting(expObjDef);
-    private defineSorting();
-    private getFirstArgument();
+    private fillDefault;
+    private parseDistinct;
+    private canHaveDistinct;
+    private findSibling;
+    private handleIndex;
+    private matchSorting;
+    private hasExtendedSorting;
+    private countByAll;
+    private defineInitVal;
+    private defineAggregationWithSorting;
+    private defineSorting;
+    private getFirstArgument;
 }

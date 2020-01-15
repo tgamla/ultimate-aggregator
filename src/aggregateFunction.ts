@@ -1,5 +1,5 @@
 import * as utils from './common/utils';
-import { IAggregateFunction } from './types/iAggregateFunction';
+import { IAggregateFunction } from './interfaces/iAggregateFunction';
 
 export function count(rawExpression): AggregateFunction {
     return new AggregateFunction(Type.COUNT, rawExpression);

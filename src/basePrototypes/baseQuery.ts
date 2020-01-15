@@ -1,6 +1,6 @@
 import { AggregateFunction } from '../aggregateFunction';
 import * as utils from '../common/utils';
-import { IBaseQuery } from '../types/iBaseQuery';
+import { IBaseQuery } from '../interfaces/iBaseQuery';
 
 export class BaseQuery<T> implements IBaseQuery<T> {
 

@@ -11,5 +11,5 @@ export declare abstract class QueryFormatter {
     static defineDistinctPreProcessing(containerReference: string): string;
     static definePreProcessedPushTemplate(containerReference: string, selectionDefinition: string, preProcessing: string[]): string;
     static defineResultsPushTemplate(containerReference: string, selectionDefinition: string): string;
-    private static defineComment(code, comment);
+    private static defineComment;
 }

@@ -133,7 +133,7 @@ export class GroupingComposition {
     }
 
     hasNonAggregatedGroupedFields(): boolean {
-        return utils.some<Expression>(this.expressions, (exp) => exp instanceof Field && exp.hasNonAggregatedFields && exp.grouping.length);
+        return utils.some<Expression>(this.expressions, (exp) => exp instanceof Field && exp.hasNonAggregatedFields && !!exp.grouping.length);
     }
 
     hasFieldsWithGroupIndex(): boolean {

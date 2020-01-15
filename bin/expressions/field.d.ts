@@ -9,7 +9,7 @@ export declare class Field extends Expression {
     grouping: Grouping;
     hasNonAggregatedFields: boolean;
     constructor(logger: Logger, rawExpression: any, queryQuotes: IQuotes, queryExpressions: Expression[], groupId?: string, grouping?: Grouping, isWithinUngroup?: boolean, level?: number);
-    private findSibling(queryExpressions);
-    private handleNonAggrFields();
-    private handleIndex(logger, isWithinUngroup);
+    private findSibling;
+    private handleNonAggrFields;
+    private handleIndex;
 }

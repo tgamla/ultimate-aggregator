@@ -1,4 +1,5 @@
 export declare type IIterator<T> = (val: T, prop?: string) => void;
+export declare type ISomeIterator<T> = (val: T, prop?: string) => boolean;
 export declare function forEach<El>(source: any, iterator: IIterator<El>): void;
 export declare function forEachRecursive<El>(source: any, inner: string, iterator: IIterator<El>): void;
 export declare type IAccumulator<El, Out> = (acc: Out, val: El, prop?: string) => Out;
@@ -6,10 +7,10 @@ export declare function reduce<El, Out>(source: any, iterator: IAccumulator<El, 
 export declare type IMapIterator<El, Out> = (val: El, prop?: string) => Out;
 export declare function map<InEl, OutEl>(source: any, iterator: IMapIterator<InEl, OutEl>): OutEl[];
 export declare function reverseMap<InEl, OutEl>(source: any, iterator: IMapIterator<InEl, OutEl>): OutEl[];
-export declare function find<El>(source: any, predicate: IIterator<El>): El;
+export declare function find<El>(source: any, predicate: ISomeIterator<El>): El;
 export declare type IIteratorReturnFound<T> = (val: T, prop?: string) => T;
 export declare function returnFound<El>(source: any, predicate: IIteratorReturnFound<El>): El;
-export declare function some<El>(source: any, predicate: IIterator<El>): boolean;
+export declare function some<El>(source: any, predicate: ISomeIterator<El>): boolean;
 export declare function deepCopy<T>(source: T): T;
 export declare function copy<T>(source: any, output?: T): T;
 export declare function isEmpty(val: any): boolean;

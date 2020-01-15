@@ -2,12 +2,9 @@
     "compilerOptions": {
         "outDir": "./bin/",
         "sourceMap": false,
-        "module": "umd",
+        "module": "CommonJS",
         "target": "es5",
-        "declaration": true,
-        "typeRoots": [
-            "./src/types"
-        ]
+        "declaration": true
     },
     "include": [
         "./src/**/*"

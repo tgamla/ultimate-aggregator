@@ -14,8 +14,8 @@ import { GroupComposition, IGroupMap } from './helpers/groupComposition';
 import { GroupingComposition } from './helpers/groupingComposition';
 import { PreProcess } from './helpers/preProcess';
 import { Selector } from './helpers/selector';
-import { IConfig } from './types/iConfig';
-import { IQuery } from './types/iQuery';
+import { IConfig } from './interfaces/iConfig';
+import { IQuery } from './interfaces/iQuery';
 import { Ungroup } from './ungroup';
 
 export class Query<T> extends BaseQuery<Query<T>> implements IQuery<T> {

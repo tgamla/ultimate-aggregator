@@ -7,5 +7,5 @@ export declare enum AggregationType {
     CONCAT = "CONCAT",
     FIRST = "FIRST",
     LAST = "LAST",
-    NTH = "NTH",
+    NTH = "NTH"
 }

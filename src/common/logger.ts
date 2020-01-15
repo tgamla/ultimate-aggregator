@@ -1,4 +1,4 @@
-import { IConfig } from '../types/iConfig';
+import { IConfig } from '../interfaces/iConfig';
 import * as utils from './utils';
 
 export class Logger {

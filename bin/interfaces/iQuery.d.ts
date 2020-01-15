@@ -8,7 +8,7 @@ export interface IQuery<T> {
     from(dataSource?: any[] | Object | IQuery<any>): IQuery<T>;
     groupBy(grouping?: string | string[]): IQuery<T>;
     filter(filter?: string): IQuery<T>;
-    orderBy(sorting?: string[] | string): IQuery<T>;
+    orderBy(sorting?: /* Function | */ string[] | string): IQuery<T>;
     toList(): T;
     execute(dataSource?: any[] | Object | IQuery<T>): T;
 }

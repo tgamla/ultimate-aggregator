@@ -32,5 +32,5 @@ export interface IGroupMap {
 export declare enum OutputType {
     AS_LIST = 0,
     AS_OBJECT = 1,
-    AS_VALUE = 2,
+    AS_VALUE = 2
 }

@@ -1,5 +1,5 @@
 import { BaseGroup } from './basePrototypes/baseGroup';
-import { IGroup } from './types/iGroup';
+import { IGroup } from './interfaces/iGroup';
 
 export class Group extends BaseGroup<Group> implements IGroup {
 

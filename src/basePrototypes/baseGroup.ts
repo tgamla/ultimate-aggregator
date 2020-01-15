@@ -1,4 +1,4 @@
-import { IBaseGroup } from '../types/iBaseGroup';
+import { IBaseGroup } from '../interfaces/iBaseGroup';
 import { BaseQuery } from './baseQuery';
 
 export class BaseGroup<T> extends BaseQuery<T> implements IBaseGroup<T> {

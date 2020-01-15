@@ -9,8 +9,8 @@ export declare class GroupBy extends Expression {
     static compareGrouping(groupingA: Grouping, groupingB: Grouping): boolean;
     static defineGroupingReference(grouping: Grouping, groupigScope: Grouping): string;
     static isOverall(exp: Expression): boolean;
-    private fillDefault();
-    private setIds();
-    private findSibling(queryExpressions);
+    private fillDefault;
+    private setIds;
+    private findSibling;
 }
 export declare type Grouping = GroupBy[];

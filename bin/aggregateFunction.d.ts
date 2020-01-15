@@ -1,4 +1,4 @@
-import { IAggregateFunction } from './types/iAggregateFunction';
+import { IAggregateFunction } from './interfaces/iAggregateFunction';
 export declare function count(rawExpression: any): AggregateFunction;
 export declare function sum(rawExpression: any): AggregateFunction;
 export declare function avg(rawExpression: any): AggregateFunction;
@@ -22,9 +22,9 @@ export declare class AggregateFunction implements IAggregateFunction {
     orderBy(sorting: string | string[]): AggregateFunction;
     toString(): string;
     valueOf(): string;
-    private defineOver();
-    private defineOrderBy();
-    private static getList(list);
+    private defineOver;
+    private defineOrderBy;
+    private static getList;
 }
 export declare enum Type {
     COUNT = "COUNT",
@@ -35,5 +35,5 @@ export declare enum Type {
     FIRST = "FIRST",
     LAST = "LAST",
     NTH = "NTH",
-    CONCAT = "CONCAT",
+    CONCAT = "CONCAT"
 }

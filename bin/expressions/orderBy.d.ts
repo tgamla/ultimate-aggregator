@@ -10,12 +10,12 @@ export declare class OrderBy extends Expression {
     static compareSorting(sortingA: Sorting, sortingB: Sorting): boolean;
     static defineGroupComparator(group: GroupComposition): string;
     static defineComparator(sorting: Sorting): string;
-    private parseOrderDirection();
-    private fillDefault();
-    private findSibling(queryExpressions);
+    private parseOrderDirection;
+    private fillDefault;
+    private findSibling;
 }
 export declare enum OrderByDirection {
     ASC = "ASC",
-    DESC = "DESC",
+    DESC = "DESC"
 }
 export declare type Sorting = OrderBy[];

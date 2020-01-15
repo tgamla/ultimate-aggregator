@@ -1,5 +1,5 @@
 import { BaseGroup } from './basePrototypes/baseGroup';
-import { IUngroup } from './types/iUngroup';
+import { IUngroup } from './interfaces/iUngroup';
 
 export class Ungroup extends BaseGroup<Ungroup> implements IUngroup {
     constructor(...selections: any[]) {

@@ -1,4 +1,4 @@
-import { IConfig } from '../types/iConfig';
+import { IConfig } from '../interfaces/iConfig';
 export declare class Logger {
     private readonly queryName;
     private readonly logLevel;
@@ -10,10 +10,10 @@ export declare class Logger {
     log(msgCode: string | number, refObj?: any): void;
     warning(msgCode: string | number, refObj?: any): void;
     error(msgCode: string | number | Error, refObj?: any): void;
-    private getMessage(msg, refObj);
-    private throwError(msg);
-    private formatMessage(type, msg);
-    private formatObject(obj);
+    private getMessage;
+    private throwError;
+    private formatMessage;
+    private formatObject;
 }
 export declare enum MessageCodes {
     UNGROUP_WITHIN_UNGROUP = 1,
@@ -27,5 +27,5 @@ export declare enum MessageCodes {
     ARRAY_IN_CONTEXT = 9,
     INCORRECT_REFERENCE_IN_CONTEXT = 10,
     EMPTY_REFERENCE_VALUE_IN_CONTEXT = 11,
-    UNNECESSARY_OVERALL_GROUP_BY = 12,
+    UNNECESSARY_OVERALL_GROUP_BY = 12
 }

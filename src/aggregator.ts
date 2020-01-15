@@ -1,10 +1,10 @@
 import { AggregateFunction, avg, concat, count, first, last, max, min, nth, sum, Type as AggregateFunctionType } from './aggregateFunction';
 import { Group } from './group';
+import { IConfig } from './interfaces/iConfig';
 import { Query } from './query';
-import { IConfig } from './types/iConfig';
 import { Ungroup } from './ungroup';
 
-export function query(config: IConfig) { return new Query(config); }
+export function query<T>(config?: IConfig) { return new Query<T>(config); }
 export function group(selection: Object) { return new Group(selection); }
 export function ungroup(selection: Object) { return new Ungroup(selection); }
 export function aggregateFunction(type: AggregateFunctionType, rawExpression: any, argExpression?: string) {
@@ -25,5 +25,6 @@ export {
     first,
     last,
     nth,
-    concat
+    concat,
+    IConfig
 };

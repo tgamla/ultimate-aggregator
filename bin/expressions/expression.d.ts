@@ -23,11 +23,11 @@ export declare class Expression {
     defineValReference(suffix?: string): string;
     static isAnyUsingIndex(expressions: Expression[]): boolean;
     protected validate(): void;
-    private normalizeCode(queryQuotes);
-    private replaceComments();
-    private replaceQuotes(queryQuotes);
-    private optimizeDotNotation(queryQuotes);
-    private static convertToStr(rawExpression);
+    private normalizeCode;
+    private replaceComments;
+    private replaceQuotes;
+    private optimizeDotNotation;
+    private static convertToStr;
 }
 export interface IQuotes {
     string?: string;
